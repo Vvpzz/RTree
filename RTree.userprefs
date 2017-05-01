@@ -1,0 +1,19 @@
+﻿<Properties StartupItem="RTree/RTree.csproj" RefactoringSettings.EnableRefactorings="True">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="RTree/RTreeRegressor.cs">
+    <Files>
+      <File FileName="RTree/Program.cs" Line="1" Column="1" />
+      <File FileName="RTree/RTree.cs" Line="1" Column="1" />
+      <File FileName="RTree/RNode.cs" Line="1" Column="1" />
+      <File FileName="RTree/RTreeRegressor.cs" Line="86" Column="1" />
+      <File FileName="RTree/RData.cs" Line="37" Column="5" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore>
+      <Breakpoint file="/home/lolo/data/Vivien/code/RTree/RTree/RTree/RData.cs" line="27" column="1" />
+      <Breakpoint file="/home/lolo/data/Vivien/code/RTree/RTree/RTree/RData.cs" line="35" column="1" />
+    </BreakpointStore>
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
