@@ -1,22 +1,65 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace RTree
 {
 	public class RTree
 	{
-		readonly List<RNode> nodes;
+		//TODO : use set instead of list
+		readonly HashSet<RNode> nodes;
 		readonly Dictionary<RNode, RNode> parents;
+		readonly Dictionary<RNode, Tuple<RNode, RNode>> children;
+		readonly RNode root;
 
-		public RTree ()
+		public RTree(RNode root)
 		{
-			nodes = new List<RNode>();
-			parents = new Dictionary<RNode, RNode>();
+			this.root = root;
+			nodes = new HashSet<RNode>(){root};
+			if(root == null)
+				return;
+
+			parents = new Dictionary<RNode, RNode>(){{root, null}};
+			children = new Dictionary<RNode, Tuple<RNode, RNode>>();
 		}
 
-		public IEnumerable<RNode> GetChildren(RNode n){
-			return parents.Where(kv => kv.Value == n).Select(kv => kv.Key);
+		public static RTree Empty()
+		{
+			return new RTree(null);
+		}
+
+//		private RTree(RTree tree) : this(tree.root, tree.nodes, tree.parents, tree.children)
+//		{
+//		}
+
+		private RTree(RNode root, HashSet<RNode> nodes, Dictionary<RNode, RNode> parents, Dictionary<RNode, Tuple<RNode, RNode>> children)
+		{
+			this.root = root;
+			this.nodes = new HashSet<RNode>(nodes);
+			this.parents = new Dictionary<RNode, RNode>(parents);
+			this.children = children.ToDictionary(kv => kv.Key, kv => Tuple.Create(kv.Value.Item1, kv.Value.Item2));
+		}
+
+		public Tuple<RNode, RNode> GetChildren(RNode n){
+			//return parents.Where(kv => kv.Value == n).Select(kv => kv.Key);
+			Tuple<RNode, RNode> kids;
+			if(children.TryGetValue(n, out kids))
+				return kids;
+
+			return kids;
+		}
+
+		public RNode GetRoot()
+		{
+			//return parents.Where(kv => kv.Value == null).Select(kv => kv.Key).Single();
+			return root;
+		}
+
+		public RNode TryGetRoot()
+		{
+			return root;
+			//return parents.Where(kv => kv.Value == null).Select(kv => kv.Key).SingleOrDefault();
 		}
 
 		public RNode GetParent(RNode n){
@@ -27,7 +70,7 @@ namespace RTree
 			throw new ArgumentException("Node not found in tree!");
 		}
 
-		public void AddChild (RNode parent, RNode child)
+		public void AddChildNodes (RNode parent, Tuple<RNode, RNode> lAndRChildren)
 		{
 //			if(parent == null)
 //			{
@@ -37,18 +80,33 @@ namespace RTree
 //				return;
 //			}
 
-			nodes.Add(child);
-			parents.Add(child, parent);
+			var lChild = lAndRChildren.Item1;
+			var rChild = lAndRChildren.Item2;
+			nodes.Add(lChild);
+			nodes.Add(rChild);
+			parents.Add(lChild, parent);
+			parents.Add(rChild, parent);
+
+			//Root node is noone's child
+			if(parent == null)
+				return;
+
+//			Tuple<RNode, RNode> kids;
+//			if(children.TryGetValue(parent, out kids))
+//				kids.Add(lAndRChildren);
+//			else
+//				children.Add(parent, new List<RNode>(){ child });
+			children.Add(parent, lAndRChildren);
 		}
 
-		public void AddChildren(RNode parent, List<RNode> children){
-			foreach (var child in children) {
-				AddChild(parent, child);
-			}
-		}
+//		public void AddChildren(RNode parent, List<RNode> children){
+//			foreach (var child in children) {
+//				AddChild(parent, child);
+//			}
+//		}
 
 		public List<RNode> GetLeaves(){
-			var parentNodes = parents.Values.Distinct();
+			var parentNodes = children.Keys;//parents.Values.Distinct();
 			return nodes.Where(n => !parentNodes.Contains(n)).ToList();
 		}
 
@@ -61,6 +119,124 @@ namespace RTree
 				return true;
 
 			return EvaluateFullSplitPath(parent, x);
+		}
+
+
+		public RTree Clone(){
+			return new RTree(root, nodes, parents, children);
+		}
+
+		public RTree SubTree(RNode node){
+			var sub = new RTree(node);
+			sub.RecursivePickChildrenFrom(this, node);
+			return sub;
+		}
+
+		public void RecursivePickChildrenFrom(RTree source, RNode node){
+			if(node == null) return;
+
+			var kids = source.GetChildren(node);
+			if(kids == null)
+				return;
+			AddChildNodes(node, kids);
+			RecursivePickChildrenFrom(source, kids.Item1);
+			RecursivePickChildrenFrom(source, kids.Item2);
+		}
+
+//		public RTree Prune(RNode node)
+//		{
+//			var t = Clone();
+//			var rParent = t.GetParent(node);
+//			if(rParent == null) //node is root node : return empty tree
+//				return RTree.Empty();
+//
+//			//remove reference to node as child
+//			var nodeAsChild = t.children[rParent];
+//			if(nodeAsChild.Item1 == node)
+//				nodeAsChild = Tuple.Create<RNode, RNode>(null, nodeAsChild.Item2);
+//			else
+//				nodeAsChild = Tuple.Create<RNode, RNode>(nodeAsChild.Item1, null);
+//			
+//			if(nodeAsChild.Item1 == null && nodeAsChild.Item2 == null)
+//				t.children.Remove(rParent);
+//			else
+//				t.children[rParent] = nodeAsChild;
+//
+//			//remove node's children recursively
+//			var kids = t.GetChildren(node);
+//			if(kids != null) 
+//			{
+//				t.Prune(kids.Item1);
+//				t.Prune(kids.Item2);
+//			}
+//
+//			//cleaning containers
+//			t.nodes.Remove(node);
+//			t.parents.Remove(node);
+//			t.children.Remove(node);
+//
+//			return t;
+//		}
+
+		public RTree Prune(RNode node, bool nodeIncluded)
+		{
+			var t = Clone();
+
+			//remove node's children recursively
+			var kids = t.GetChildren(node);
+			if(kids != null) 
+			{
+				t = t.Prune(kids.Item1, true);
+				t = t.Prune(kids.Item2, true);
+			}
+
+			if(!nodeIncluded)
+				return t;
+				
+			var rParent = t.GetParent(node);
+			if(rParent == null) //node is root node : return empty tree
+				return RTree.Empty();
+
+			//remove reference to node as child
+			var nodeAsChild = t.children[rParent];
+			if(nodeAsChild.Item1 == node)
+				nodeAsChild = Tuple.Create<RNode, RNode>(null, nodeAsChild.Item2);
+			else
+				nodeAsChild = Tuple.Create<RNode, RNode>(nodeAsChild.Item1, null);
+
+			if(nodeAsChild.Item1 == null && nodeAsChild.Item2 == null)
+				t.children.Remove(rParent);
+			else
+				t.children[rParent] = nodeAsChild;
+
+			//cleaning containers
+			t.nodes.Remove(node);
+			t.parents.Remove(node);
+			t.children.Remove(node);
+
+			return t;
+		}
+
+		public string Print(RNode n = null, string prefix = null)
+		{
+			if(n == null)
+				n = TryGetRoot();
+
+			if(n==null)
+				return "Null tree";
+
+			var sb = new StringBuilder(n.ToString());
+			sb.AppendLine();
+			var kids = GetChildren(n);
+			prefix += "\t";
+			if(kids != null) 
+			{
+				if(kids.Item1 != null)
+					sb.Append(string.Format("{1}{0}", Print(kids.Item1, prefix), prefix));
+				if(kids.Item2 != null)
+					sb.Append(string.Format("{1}{0}", Print(kids.Item2, prefix), prefix));
+			}
+			return sb.ToString();
 		}
 	}
 }

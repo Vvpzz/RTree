@@ -7,6 +7,7 @@ namespace RTree
 		int Id {get;}
 	}
 
+	//TODO : distinguish left nodes (<=) from right nodes (>)?
 	public class BaseRNode:IRNode
 	{
 		static int staticId = 0;
@@ -33,6 +34,9 @@ namespace RTree
 			Data = data;
 		}
 
+		public string ToString(){
+			return string.Format("[{3}] {0} ; nX:{1} ; avgX:{2:0.000}", NodeSplit.ToString(), Data.NSample, Data.Average, Id);
+		}
 	}
 }
 

@@ -45,16 +45,24 @@ namespace RTree
 				inDomain =  x => x <= varLimit;				
 		}
 
-		public bool InDomain(double[] xs){
+		public bool InDomain(double[] xs)
+		{
 			return inDomain(xs[varId]);
 		}
 
-		public RRegionSplit Complement(){
+		public RRegionSplit Complement()
+		{
 			return new RRegionSplit(varId, varLimit, !strictlyGreater);
 		}
 
-		public static RRegionSplit None(){
+		public static RRegionSplit None()
+		{
 			return new RRegionSplit(0, double.NegativeInfinity, true);
+		}
+
+		public override string ToString()
+		{
+			return string.Format("x{0} {1} {2:N1}", varId, strictlyGreater ? ">" : "<=", varLimit);
 		}
 	}
 }
