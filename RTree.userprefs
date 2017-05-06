@@ -1,22 +1,18 @@
 ﻿<Properties StartupItem="RTree/RTree.csproj" RefactoringSettings.EnableRefactorings="True">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="RTree/RTree.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="RTree/RTreeRegressor.cs">
     <Files>
-      <File FileName="RTree/Program.cs" Line="65" Column="1" />
-      <File FileName="RTree/RTree.cs" Line="203" Column="5" />
-      <File FileName="RTree/RNode.cs" Line="1" Column="1" />
-      <File FileName="RTree/RTreeRegressor.cs" Line="91" Column="13" />
-      <File FileName="RTree/RData.cs" Line="1" Column="1" />
-      <File FileName="RTree/RRegion.cs" Line="1" Column="1" />
+      <File FileName="RTree/Program.cs" Line="10" Column="4" />
+      <File FileName="RTree/RTree.cs" Line="130" Column="16" />
+      <File FileName="RTree/RNode.cs" Line="10" Column="60" />
+      <File FileName="RTree/RTreeRegressor.cs" Line="128" Column="10" />
+      <File FileName="RTree/RData.cs" Line="131" Column="10" />
+      <File FileName="RTree/RRegion.cs" Line="63" Column="3" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore>
       <Breakpoint file="/home/lolo/data/Vivien/code/RTree/RTree/RTree/RTreeRegressor.cs" line="117" column="1" />
-      <Breakpoint file="/home/lolo/data/Vivien/code/RTree/RTree/RTree/Program.cs" line="56" column="39" />
-      <Breakpoint file="/home/lolo/data/Vivien/code/RTree/RTree/RTree/Program.cs" line="57" column="1" />
-      <Breakpoint file="/home/lolo/data/Vivien/code/RTree/RTree/RTree/RTree.cs" line="166" column="1" />
-      <Breakpoint file="/home/lolo/data/Vivien/code/RTree/RTree/RTree/RTree.cs" line="168" column="1" />
     </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />

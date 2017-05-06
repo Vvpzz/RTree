@@ -51,7 +51,7 @@ namespace RTree
 			if(x.Length != nSample)
 				throw new ArgumentException("Inconsistent x and y sample size!");
 			
-			if(!(x.Select(a => a.Length).Distinct().Count()<2))
+			if(x.Select(a => a.Length).Distinct().Count() >= 2)
 				throw new ArgumentException("Inconsistent x sample size!");
 			int nVars = x[0].Length;
 
@@ -126,9 +126,9 @@ namespace RTree
 
 		public RDataPoint(double[] xs, double y)
 		{
-			this.Xs = xs;
-			this.Y = y;
-			this.NbVars = xs.Length;
+			Xs = xs;
+			Y = y;
+			NbVars = xs.Length;
 		}
 
 

@@ -50,6 +50,10 @@ namespace RTree
 			return kids;
 		}
 
+		public int Size(){
+			return nodes.Count;
+		}
+
 		public RNode GetRoot()
 		{
 			//return parents.Where(kv => kv.Value == null).Select(kv => kv.Key).Single();
@@ -105,9 +109,13 @@ namespace RTree
 //			}
 //		}
 
-		public List<RNode> GetLeaves(){
+		public HashSet<RNode> GetLeaves(){
 			var parentNodes = children.Keys;//parents.Values.Distinct();
-			return nodes.Where(n => !parentNodes.Contains(n)).ToList();
+			return new HashSet<RNode>(nodes.Where(n => !parentNodes.Contains(n)));
+		}
+
+		public HashSet<RNode> GetInternalNodes(){
+			return new HashSet<RNode>(nodes.Except(GetLeaves()));
 		}
 
 		public bool EvaluateFullSplitPath(RNode n, double[] x){
@@ -215,6 +223,49 @@ namespace RTree
 			t.children.Remove(node);
 
 			return t;
+		}
+
+		public RTree CCPrune(double pruningWeight, out double mse){
+			double bestMse = double.PositiveInfinity;
+			RTree bestTree = null;
+			for(int i = 0; i < nodes.Count; i++) {
+				var tmpTree = Prune(nodes.ElementAt(i), false);
+				var tmpMse = tmpTree.CostComplexityCriterion(pruningWeight);//tmpTree.MSE();
+				if(tmpMse<bestMse)
+				{
+					bestMse = tmpMse;
+					bestTree = tmpTree;
+				}
+			}
+			mse = bestMse;
+			return bestTree;
+		}
+
+		private double CostComplexityCriterion(double pruningWeight){
+			var leaves = GetLeaves();
+			var nLeaves = leaves.Count;
+			double cc = pruningWeight * nLeaves;
+			for(int i = 0; i < nLeaves; i++) {
+				cc += leaves.ElementAt(i).Data.MSE;
+				//TODO : break loop if cc > threshold passed as parameter (i.e. stop evaluate MSE if already too big)
+			}
+			return cc;
+		}
+
+
+		public double MSE(){
+			var leaves = GetLeaves();
+			var nLeaves = leaves.Count;
+			double mse = 0.0;
+			for(int i = 0; i < nLeaves; i++) {
+				mse += leaves.ElementAt(i).Data.MSE;
+				//TODO : break loop if cc > threshold passed as parameter (i.e. stop evaluate MSE if already too big)
+			}
+			return mse;
+		}
+
+		public RTree WLPrune(out double mse){
+			throw new NotImplementedException();
 		}
 
 		public string Print(RNode n = null, string prefix = null)

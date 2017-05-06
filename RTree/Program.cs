@@ -25,20 +25,38 @@ namespace RTree
 //			Console.WriteLine(z);
 
 
-//			var settings = new RTreeRegressionSettings(5, 0.1);
-			var settings = new RTreeRegressionSettings(10, 0.1);
+			var settingsWoPruning = new RTreeRegressionSettings(5, PruningType.None, 0.1);
+			var settings = new RTreeRegressionSettings(10, PruningType.CostComplexity, 0.1);
+
+			var regWoPruning = new RTreeRegressor(settingsWoPruning);
+			var reportWoPruning = regWoPruning.Train(data.Item1, data.Item2);
+
 			var reg = new RTreeRegressor(settings);
-			reg.Train(data.Item1, data.Item2);
+			var report = reg.Train(data.Item1, data.Item2);
+
+			var reggedYWoPruning = new List<double>();
+			for(int i = 0; i < x.Count(); i++) {
+				reggedYWoPruning.Add(regWoPruning.Evaluate(data.Item1[i]));
+			}
 
 			var reggedY = new List<double>();
 			for(int i = 0; i < x.Count(); i++) {
 				reggedY.Add(reg.Evaluate(data.Item1[i]));
 			}
 
-			var xyy = xy.Zip(reggedY, (a, b) => a + ";" + b);
-			var zz = string.Join("\r\n", xyy);
+			var xyy = xy.Zip(reggedYWoPruning, (a, b) => a + ";" + b);
+			var xyyy = xyy.Zip(reggedY, (a, b) => a + ";" + b);
+			var zz = string.Join("\r\n", xyyy);
 			Console.WriteLine(zz);
 
+			Console.WriteLine ("*** Non Pruned tree ***");
+			Console.WriteLine(reportWoPruning);
+			var treeWoPruning = regWoPruning.Tree;
+			Console.WriteLine(treeWoPruning.Print());
+
+
+			Console.WriteLine ("*** Pruned tree ***");
+			Console.WriteLine(report);
 			var tree = reg.Tree;
 			Console.WriteLine(tree.Print());
 
@@ -55,7 +73,7 @@ namespace RTree
 			var emptyTree = tree.Prune(tree.GetRoot(), true);
 			Console.WriteLine(emptyTree.Print());
 
-			var oneLeafLessTree = tree.Prune(tree.GetLeaves()[0], true);
+			var oneLeafLessTree = tree.Prune(tree.GetLeaves().ElementAt(0), true);
 			Console.WriteLine(oneLeafLessTree.Print());
 
 			var oneHalfTree = tree.Prune(tree.GetChildren(root).Item1, true);
@@ -78,7 +96,7 @@ namespace RTree
 			var subTree = tree.SubTree(tree.GetChildren(root).Item1);
 			Console.WriteLine(subTree.Print());
 
-			var subTreeFromLeaves = tree.SubTree(tree.GetParent(tree.GetLeaves()[3]));
+			var subTreeFromLeaves = tree.SubTree(tree.GetParent(tree.GetLeaves().ElementAt(3)));
 			Console.WriteLine(subTreeFromLeaves.Print());
 //			Console.WriteLine ("******** x *********");
 //			Console.WriteLine(x);

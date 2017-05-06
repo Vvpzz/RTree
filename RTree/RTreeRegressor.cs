@@ -1,25 +1,57 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace RTree
 {
+	public enum PruningType{
+		CostComplexity,
+		WeakestLink,
+		None
+	}
+
 	public class RTreeRegressionSettings{
 		public int MinNodeSize {get; private set;}
+		public PruningType PruningType {get; private set;}
 		public double PruningCriterion {get; private set;}
 
-		public RTreeRegressionSettings(int minNodeSize, double pruningCriterion)
+		public RTreeRegressionSettings(int minNodeSize, PruningType pruningType, double pruningCriterion)
 		{
 			if(minNodeSize<=0 || pruningCriterion<0)
 				throw new ArgumentException("Wrong regression settings!");
 			
 			MinNodeSize = minNodeSize;
+			PruningType = pruningType;
 			PruningCriterion = pruningCriterion;
 		}
 		
 	}
 
 	public class RTreeRegressionReport{
-		double mse;
+
+		public double MseBeforePruning {get; private set;}
+		public double MseAfterPruning {get; private set;}
+		public int TreeSizeBeforePruning {get; private set;}
+		public int TreeSizeAfterPruning {get; private set;}
+
+		public RTreeRegressionReport(double mseBeforePruning, double mseAfterPruning, int treeSizeBeforePruning, int treeSizeAfterPruning)
+		{
+			MseBeforePruning = mseBeforePruning;
+			MseAfterPruning = mseAfterPruning;
+			TreeSizeBeforePruning = treeSizeBeforePruning;
+			TreeSizeAfterPruning = treeSizeAfterPruning;
+		}
+
+		public override string ToString(){
+			var sb = new StringBuilder();
+			sb.AppendLine(string.Format("{0}:{1:0.000}", "MSE before pruning", MseBeforePruning));
+			sb.AppendLine(string.Format("{0}:{1:0.000}", "MSE after pruning", MseAfterPruning));
+			sb.AppendLine(string.Format("Nb nodes before pruning:{0}", TreeSizeBeforePruning));
+			sb.AppendLine(string.Format("Nb nodes after pruning:{0}", TreeSizeAfterPruning));
+			return sb.ToString();
+		}
+		
 	}
 
 	public class RTreeRegressor
@@ -39,15 +71,18 @@ namespace RTree
 		}
 			
 		public RTreeRegressionReport Train(double[][] x, double[] y){
-			var largeTree = BuildFullTree(x, y);
-//			var prunedTree = PruneTree(largeTree);
-			return new RTreeRegressionReport();//TODO
+			double mseBeforePruning;
+			var largeTree = BuildFullTree(x, y, out mseBeforePruning);
+			double mseAfterPruning;
+			var prunedTree = PruneTree(largeTree, out mseAfterPruning);
+			return new RTreeRegressionReport(mseBeforePruning, mseAfterPruning, largeTree.Size(), prunedTree.Size());//TODO
 		}
 
 		public double Evaluate(double[] x){
 			var leaves = Tree.GetLeaves();
-			for(int i = 0; i < leaves.Count; i++) {
-				var leaf = leaves[i];
+			for(int i = 0; i < leaves.Count; i++) 
+			{
+				var leaf = leaves.ElementAt(i);
 				if(Tree.EvaluateFullSplitPath(leaf, x))
 					return leaf.Data.Average;
 			}
@@ -55,13 +90,15 @@ namespace RTree
 		}
 			
 
-		private RTree BuildFullTree(double[][] x, double[] y)
+		private RTree BuildFullTree(double[][] x, double[] y, out double mse)
 		{
 			var data = RData.FromRawData(x, y);
 			var rootNode = new RNode(RRegionSplit.None(), data);
 			Tree = new RTree(rootNode);
 			//Tree.AddChild(null, rootNode);
 			RecursiveBuildFullTree(Tree, rootNode);
+
+			mse = Tree.MSE();
 
 			return Tree;
 		}
@@ -100,8 +137,21 @@ namespace RTree
 		}
 
 		//TODO : écrire cette méthode de manière récursive. Voir ce qu'on veut comme output (arbre + cc)?
-		private List<Tuple<RTree, double>> PruneTree(RTree largeTree)
+		private /*List<Tuple<RTree, double>>*/RTree PruneTree(RTree largeTree, out double mse)
 		{
+			switch(settings.PruningType) 
+			{
+			case PruningType.CostComplexity:
+				return largeTree.CCPrune(settings.PruningCriterion, out mse);
+			case PruningType.WeakestLink:
+				return largeTree.WLPrune(out mse);
+			case PruningType.None:
+				mse = double.NaN;
+				return largeTree;
+			default:
+				throw new ArgumentException("Unknown pruning type");
+				break;
+			}
 //			var leaves = largeTree.GetLeaves();
 //			var nLeaves = leaves.Count;
 //			double minCc = double.PositiveInfinity;
@@ -125,22 +175,14 @@ namespace RTree
 			//Puis on continue de même sur ce sous-arbre pour supprimer une 2eme feuille.
 			//Ainsi de suite jusqu'à ce qu'on ai supprimé toutes les feuilles.
 
-
+//			ici!!!
+			//TODO
+			//cost complexity pruning != weakest link pruning!!
 
 
 			throw new NotImplementedException();
 		}
-
-		private double CostComplexityCriterion(RTree t){
-			var leaves = t.GetLeaves();
-			var nLeaves = leaves.Count;
-			double cc = settings.PruningCriterion * nLeaves;
-			for(int i = 0; i < nLeaves; i++) {
-				cc += leaves[i].Data.MSE;
-				//TODO : break loop if cc > threshold passed as parameter (i.e. stop evaluate MSE if already too big)
-			}
-			return cc;
-		}
+			
 	}
 
 
