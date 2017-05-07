@@ -109,16 +109,19 @@ namespace RTree
 //			}
 //		}
 
-		public HashSet<RNode> GetLeaves(){
+		public HashSet<RNode> GetLeaves()
+		{
 			var parentNodes = children.Keys;//parents.Values.Distinct();
 			return new HashSet<RNode>(nodes.Where(n => !parentNodes.Contains(n)));
 		}
 
-		public HashSet<RNode> GetInternalNodes(){
+		public HashSet<RNode> GetInternalNodes()
+		{
 			return new HashSet<RNode>(nodes.Except(GetLeaves()));
 		}
 
-		public bool EvaluateFullSplitPath(RNode n, double[] x){
+		private bool EvaluateFullSplitPath(RNode n, double[] x)
+		{
 			if(!n.NodeSplit.InDomain(x))
 				return false;
 
@@ -129,6 +132,18 @@ namespace RTree
 			return EvaluateFullSplitPath(parent, x);
 		}
 
+
+		public double Evaluate(double[] x)
+		{
+			var leaves = GetLeaves();
+			for(int i = 0; i < leaves.Count; i++) 
+			{
+				var leaf = leaves.ElementAt(i);
+				if(EvaluateFullSplitPath(leaf, x))
+					return leaf.Data.Average;
+			}
+			throw new ArgumentOutOfRangeException("x", "No region for this x ?!");
+		}
 
 		public RTree Clone(){
 			return new RTree(root, nodes, parents, children);

@@ -34,7 +34,7 @@ namespace RTree
 			Data = data;
 		}
 
-		public string ToString(){
+		public override string ToString(){
 			return string.Format("[{3}] {0} ; nX:{1} ; avgX:{2:0.000}", NodeSplit.ToString(), Data.NSample, Data.Average, Id);
 		}
 	}

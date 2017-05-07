@@ -15,8 +15,9 @@ namespace RTree
 		public int MinNodeSize {get; private set;}
 		public PruningType PruningType {get; private set;}
 		public double PruningCriterion {get; private set;}
+		public int NbSplitVariables {get; private set;}
 
-		public RTreeRegressionSettings(int minNodeSize, PruningType pruningType, double pruningCriterion)
+		public RTreeRegressionSettings(int minNodeSize, PruningType pruningType, double pruningCriterion, int nbSplitVariables = 0)
 		{
 			if(minNodeSize<=0 || pruningCriterion<0)
 				throw new ArgumentException("Wrong regression settings!");
@@ -24,6 +25,7 @@ namespace RTree
 			MinNodeSize = minNodeSize;
 			PruningType = pruningType;
 			PruningCriterion = pruningCriterion;
+			NbSplitVariables = nbSplitVariables;
 		}
 		
 	}
@@ -58,41 +60,68 @@ namespace RTree
 	{
 		readonly RTreeRegressionSettings settings;
 
-		public RTree Tree {
-			get ;
-			private set;
-		}
+		public RTree Tree { get; private set; }
+		public RTreeRegressionReport Report { get; private set; }
 
-		RTreeRegressionReport report;
 		public RTreeRegressor (RTreeRegressionSettings settings)
 		{
 			this.settings = settings;
 			Tree = null;
 		}
 			
-		public RTreeRegressionReport Train(double[][] x, double[] y){
-			double mseBeforePruning;
-			var largeTree = BuildFullTree(x, y, out mseBeforePruning);
-			double mseAfterPruning;
-			var prunedTree = PruneTree(largeTree, out mseAfterPruning);
-			return new RTreeRegressionReport(mseBeforePruning, mseAfterPruning, largeTree.Size(), prunedTree.Size());//TODO
+		public RTreeRegressionReport Train(double[][] x, double[] y)
+		{
+			var data = RData.FromRawData(x, y);
+			return Train(data);
+//			double mseBeforePruning;
+//			var largeTree = BuildFullTree(data, out mseBeforePruning);
+//			double mseAfterPruning;
+//			var prunedTree = PruneTree(largeTree, out mseAfterPruning);
+//			Report = new RTreeRegressionReport(mseBeforePruning, mseAfterPruning, largeTree.Size(), prunedTree.Size());
+//			return Report;
 		}
 
+		public RTreeRegressionReport Train(RData data)
+		{
+//			var data = RData.FromRawData(x, y);
+			double mseBeforePruning;
+			var largeTree = BuildFullTree(data, out mseBeforePruning);
+			double mseAfterPruning;
+			var prunedTree = PruneTree(largeTree, out mseAfterPruning);
+			Report = new RTreeRegressionReport(mseBeforePruning, mseAfterPruning, largeTree.Size(), prunedTree.Size());
+			return Report;
+		}
+
+		//TODO : move to RTree : a tree should know how to evaluate one self
+		// 3 levels : regressor, data structure, data structure builder
 		public double Evaluate(double[] x){
-			var leaves = Tree.GetLeaves();
-			for(int i = 0; i < leaves.Count; i++) 
-			{
-				var leaf = leaves.ElementAt(i);
-				if(Tree.EvaluateFullSplitPath(leaf, x))
-					return leaf.Data.Average;
-			}
-			throw new ArgumentOutOfRangeException("x", "No region for this x ?!");
+			return Tree.Evaluate(x);
+//			var leaves = Tree.GetLeaves();
+//			for(int i = 0; i < leaves.Count; i++) 
+//			{
+//				var leaf = leaves.ElementAt(i);
+//				if(Tree.EvaluateFullSplitPath(leaf, x))
+//					return leaf.Data.Average;
+//			}
+//			throw new ArgumentOutOfRangeException("x", "No region for this x ?!");
 		}
 			
 
-		private RTree BuildFullTree(double[][] x, double[] y, out double mse)
+//		public RTree BuildFullTree(double[][] x, double[] y, out double mse)
+//		{
+//			var data = RData.FromRawData(x, y);
+//			var rootNode = new RNode(RRegionSplit.None(), data);
+//			Tree = new RTree(rootNode);
+//			//Tree.AddChild(null, rootNode);
+//			RecursiveBuildFullTree(Tree, rootNode);
+//
+//			mse = Tree.MSE();
+//
+//			return Tree;
+//		}
+
+		private RTree BuildFullTree(RData data, out double mse)
 		{
-			var data = RData.FromRawData(x, y);
 			var rootNode = new RNode(RRegionSplit.None(), data);
 			Tree = new RTree(rootNode);
 			//Tree.AddChild(null, rootNode);
@@ -103,18 +132,25 @@ namespace RTree
 			return Tree;
 		}
 
-		public void RecursiveBuildFullTree(RTree Tree, RNode node)
+		private void RecursiveBuildFullTree(RTree t, RNode node)
 		{
 			var data = node.Data;
 			if(data.NSample <= settings.MinNodeSize)
 				return;
 			var minMse = double.PositiveInfinity;
+
+			var nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
+			var splitVars = GetSplitVars(data.NVars, nSplitVars);
+
 			RData bestDataL = null, bestDataR = null;
 			RRegionSplit bestRegionSplit = null;
-			for(int varId = 0; varId < data.NVars; varId++) 
+//			for(int varId = 0; varId < data.NVars; varId++) 
+			for(int i = 0; i < nSplitVars; i++) 
 			{				
+				int varId = splitVars[i];
 				var splits = data.ComputeSplitPoints(varId);
-				for (int j = 0; j < splits.Length; j++) {
+				for (int j = 0; j < splits.Length; j++) 
+				{
 					var rSplit = new RRegionSplit(varId, splits[j], false);
 					var partitions = data.Partitions(rSplit);
 					var dataL = partitions[0].Item2;
@@ -131,13 +167,26 @@ namespace RTree
 			//TODO : add info in report
 			var nodeL = new RNode(bestRegionSplit, bestDataL);
 			var nodeR = new RNode(bestRegionSplit.Complement(), bestDataR);
-			Tree.AddChildNodes(node, Tuple.Create( nodeL, nodeR ));
-			RecursiveBuildFullTree(Tree, nodeL);
-			RecursiveBuildFullTree(Tree, nodeR);
+			t.AddChildNodes(node, Tuple.Create( nodeL, nodeR ));
+			RecursiveBuildFullTree(t, nodeL);
+			RecursiveBuildFullTree(t, nodeR);
 		}
 
-		//TODO : écrire cette méthode de manière récursive. Voir ce qu'on veut comme output (arbre + cc)?
-		private /*List<Tuple<RTree, double>>*/RTree PruneTree(RTree largeTree, out double mse)
+		private static int[] GetSplitVars(int nVars, int nSplitVars)
+		{
+			int[] splitVars;
+			if(nSplitVars != nVars) {
+				var rnd = new Random();
+				var bs = new BootStrap(rnd, nVars, nSplitVars);
+				splitVars = bs.DoSample();
+			}
+			else {
+				splitVars = Enumerable.Range(0, nVars).ToArray();
+			}
+			return splitVars;
+		}
+			
+		private RTree PruneTree(RTree largeTree, out double mse)
 		{
 			switch(settings.PruningType) 
 			{
@@ -150,37 +199,8 @@ namespace RTree
 				return largeTree;
 			default:
 				throw new ArgumentException("Unknown pruning type");
-				break;
+//				break;
 			}
-//			var leaves = largeTree.GetLeaves();
-//			var nLeaves = leaves.Count;
-//			double minCc = double.PositiveInfinity;
-//			RTree bestPrunedTree = null;
-//			for(int i = 0; i < nLeaves; i++) {
-//				RTree prunedTree = Tree.Prune(Tree.GetParent(leaves[i]));
-//				if(prunedTree == null)
-//					return;
-//				var cc = CostComplexityCriterion(prunedTree);
-//				if(cc < minCc) 
-//				{
-//					minCc = cc;
-//					bestPrunedTree = prunedTree;
-//				}
-//			}
-//			return PruneTree(bestPrunedTree);
-
-
-			//algo : on parcourt les feuilles, on en supprime une à chaque fois.
-			//On garde le sous-arbre avec une feuille en moins qui ajoute le moins d'erreur.
-			//Puis on continue de même sur ce sous-arbre pour supprimer une 2eme feuille.
-			//Ainsi de suite jusqu'à ce qu'on ai supprimé toutes les feuilles.
-
-//			ici!!!
-			//TODO
-			//cost complexity pruning != weakest link pruning!!
-
-
-			throw new NotImplementedException();
 		}
 			
 	}

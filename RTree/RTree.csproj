@@ -41,6 +41,9 @@
     <Compile Include="RRegion.cs" />
     <Compile Include="RData.cs" />
     <Compile Include="RTreeTest.cs" />
+    <Compile Include="RForest.cs" />
+    <Compile Include="RForestRegressor.cs" />
+    <Compile Include="Bootstrap.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

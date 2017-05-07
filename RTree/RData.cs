@@ -69,6 +69,16 @@ namespace RTree
 			return new RData(points, nVars, nSample);
 		}
 
+		public RData BootStrap(int[] sampleIndices)
+		{
+			int n = sampleIndices.Length;
+			var dp = new List<RDataPoint>(n);
+			for(int i = 0; i < n; i++) {
+				dp.Add(Points[sampleIndices[i]]);
+			}
+			return new RData(dp, NVars, n);
+		}	
+
 		public Tuple<RRegionSplit, RData>[] Partitions(RRegionSplit split)
 		{
 			var ptsIn = new List<RDataPoint>();

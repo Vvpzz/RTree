@@ -35,18 +35,32 @@ namespace RTree
 			var report = reg.Train(data.Item1, data.Item2);
 
 			var reggedYWoPruning = new List<double>();
-			for(int i = 0; i < x.Count(); i++) {
+			for(int i = 0; i < x.Count(); i++) 
+			{
 				reggedYWoPruning.Add(regWoPruning.Evaluate(data.Item1[i]));
 			}
 
 			var reggedY = new List<double>();
-			for(int i = 0; i < x.Count(); i++) {
+			for(int i = 0; i < x.Count(); i++) 
+			{
 				reggedY.Add(reg.Evaluate(data.Item1[i]));
+			}
+
+			//TODO : test split variable
+			var forestSettings = new RForestRegressionSettings(10, 0.6, 5, 0);
+			var forestReg = new RForestRegressor(forestSettings);
+			forestReg.Train(data.Item1, data.Item2);
+			var forestReggedY = new List<double>();
+			for(int i = 0; i < x.Count(); i++) 
+			{
+				forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
 			}
 
 			var xyy = xy.Zip(reggedYWoPruning, (a, b) => a + ";" + b);
 			var xyyy = xyy.Zip(reggedY, (a, b) => a + ";" + b);
-			var zz = string.Join("\r\n", xyyy);
+			var xyyyf = xyyy.Zip(forestReggedY, (a, b) => a + ";" + b);
+
+			var zz = string.Join("\r\n", xyyyf);
 			Console.WriteLine(zz);
 
 			Console.WriteLine ("*** Non Pruned tree ***");
