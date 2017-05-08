@@ -8,9 +8,8 @@ namespace RTree.Test
 		{
 		}
 
-		public Tuple<double[][], double[]> Build1DTestData()
+		public Tuple<double[][], double[]> Build1DTestData(int size = 50)
 		{
-			const int size = 50;
 			var x = new double[size][];
 			var y = new double[size];
 

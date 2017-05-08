@@ -9,24 +9,23 @@ namespace RTree.Test
 	[TestFixture()]
 	public class RTreeTest
 	{
+		[SetUp]
+		public void Setup()
+		{
+			
+		}
+
 		[Test()]
-		public void TestCase()
+		public void TestAllRegressors()
 		{
 
 			var test = new RTreeTestData();
 			var data = test.Build1DTestData();
 
-			//			var x = string.Join("\r\n", data.Item1.Select(xx=>xx[0]));
-			//			var y = string.Join("\r\n", data.Item2);
-
 			var x = data.Item1.Select(xx => xx[0]).ToArray();
 			var y = data.Item2;
 			var xy = x.Zip(y, (a,b)=>a+";"+b);
 			var z = string.Join("\r\n", xy);
-
-
-			//			Console.WriteLine(z);
-
 
 			var settingsWoPruning = new RTreeRegressionSettings(5, PruningType.None, 0.1);
 			var settings = new RTreeRegressionSettings(10, PruningType.CostComplexity, 0.1);
@@ -127,6 +126,31 @@ namespace RTree.Test
 
 			var subTreeFromLeaves = tree.SubTree(tree.GetParent(tree.GetLeaves().ElementAt(3)));
 			Console.WriteLine(subTreeFromLeaves.Print());
+		}
+
+		[Test()]
+		public void TestForestPerformance(){
+			var test = new RTreeTestData();
+			var data = test.Build1DTestData(30000);
+			var x = data.Item1.Select(xx => xx[0]).ToArray();
+			var y = data.Item2;
+			var xy = x.Zip(y, (a,b)=>a+";"+b);
+
+			//TODO : test higher dimensions & split variable
+			var forestSettings = new RForestRegressionSettings(150, 0.6, 100, 0);
+			var forestReg = new RForestRegressor(forestSettings);
+			forestReg.Train(data.Item1, data.Item2);
+			var forestReggedY = new List<double>();
+			for(int i = 0; i < x.Count(); i++) 
+			{
+				forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
+			}
+
+			var xyf = xy.Zip(forestReggedY, (a, b) => a + ";" + b);
+
+//			var zz = string.Join("\r\n", xyf);
+//			Console.WriteLine("x;y;yTreeNoPruning;yTreePruning;yForest");
+//			Console.WriteLine(zz);
 		}
 	}
 }

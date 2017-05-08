@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace RTree
 {
@@ -10,6 +12,7 @@ namespace RTree
 		public int MinNodeSize {get; private set;}
 		public int NbSplitVariables {get; private set;}
 
+		//TODO : see settings for limiting tree size
 		public RForestRegressionSettings(int nbTrees, double sampleProportion, int minNodeSize, int nbSplitVariables)
 		{
 			NbTrees = nbTrees;
@@ -67,11 +70,15 @@ namespace RTree
 			var rand = new Random(1234);
 			var bs = new BootStrap(rand, dataSize, (int)(dataSize * settings.SampleProportion));
 			var treeSettings = new RTreeRegressionSettings(settings.MinNodeSize, PruningType.None, double.NaN, settings.NbSplitVariables);
+
 			for(int i = 0; i < nTrees; i++) 
 			{
+				var sw = Stopwatch.StartNew();
 				var bsIndices = bs.DoSample();
 				var bsData = data.BootStrap(bsIndices);
 				trees.Add(GrowTree(bsData, treeSettings));
+				sw.Stop();
+				Console.WriteLine (string.Format("Build tree {0}/{1} [n={3}][{2}]", i+1, nTrees, sw.Elapsed, trees.Last().Size()));
 			}
 
 			forest = new RForest(trees);
