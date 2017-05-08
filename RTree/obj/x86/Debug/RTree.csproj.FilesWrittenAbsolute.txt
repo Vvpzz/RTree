@@ -1,5 +1,0 @@
-/home/lolo/data/Vivien/code/RTree/RTree/RTree/obj/x86/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
-/home/lolo/data/Vivien/code/RTree/RTree/RTree/bin/Debug/RTree.exe.mdb
-/home/lolo/data/Vivien/code/RTree/RTree/RTree/bin/Debug/RTree.exe
-/home/lolo/data/Vivien/code/RTree/RTree/RTree/obj/x86/Debug/RTree.exe
-/home/lolo/data/Vivien/code/RTree/RTree/RTree/obj/x86/Debug/RTree.exe.mdb
