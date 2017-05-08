@@ -33,14 +33,12 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RTree.cs" />
     <Compile Include="RNode.cs" />
     <Compile Include="RTreeRegressor.cs" />
     <Compile Include="RRegion.cs" />
     <Compile Include="RData.cs" />
-    <Compile Include="RTreeTest.cs" />
     <Compile Include="RForest.cs" />
     <Compile Include="RForestRegressor.cs" />
     <Compile Include="Bootstrap.cs" />

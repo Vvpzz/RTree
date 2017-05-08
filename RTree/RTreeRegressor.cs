@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -88,6 +87,9 @@ namespace RTree
 			var largeTree = BuildFullTree(data, out mseBeforePruning);
 			double mseAfterPruning;
 			var prunedTree = PruneTree(largeTree, out mseAfterPruning);
+
+			Tree = prunedTree;
+
 			Report = new RTreeRegressionReport(mseBeforePruning, mseAfterPruning, largeTree.Size(), prunedTree.Size());
 			return Report;
 		}
@@ -123,13 +125,13 @@ namespace RTree
 		private RTree BuildFullTree(RData data, out double mse)
 		{
 			var rootNode = new RNode(RRegionSplit.None(), data);
-			Tree = new RTree(rootNode);
+			var buildTree = new RTree(rootNode);
 			//Tree.AddChild(null, rootNode);
-			RecursiveBuildFullTree(Tree, rootNode);
+			RecursiveBuildFullTree(buildTree, rootNode);
 
-			mse = Tree.MSE();
+			mse = buildTree.MSE();
 
-			return Tree;
+			return buildTree;
 		}
 
 		private void RecursiveBuildFullTree(RTree t, RNode node)
@@ -188,19 +190,25 @@ namespace RTree
 			
 		private RTree PruneTree(RTree largeTree, out double mse)
 		{
+			var prunedTree = largeTree.Clone();
 			switch(settings.PruningType) 
 			{
 			case PruningType.CostComplexity:
-				return largeTree.CCPrune(settings.PruningCriterion, out mse);
+				prunedTree = largeTree.CCPrune(settings.PruningCriterion, out mse);
+				break;
 			case PruningType.WeakestLink:
-				return largeTree.WLPrune(out mse);
+				prunedTree = largeTree.WLPrune(out mse);
+				break;
 			case PruningType.None:
 				mse = double.NaN;
-				return largeTree;
+//				prunedTree = largeTree;
+				break;
 			default:
 				throw new ArgumentException("Unknown pruning type");
 //				break;
 			}
+
+			return prunedTree;
 		}
 			
 	}

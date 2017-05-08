@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace RTree
+namespace RTree.Test
 {
-	public class RTreeTest
+	public class RTreeTestData
 	{
-		public RTreeTest()
+		public RTreeTestData()
 		{
 		}
 

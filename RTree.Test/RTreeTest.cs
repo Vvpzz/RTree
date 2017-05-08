@@ -1,20 +1,23 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
+using RTree;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace RTree
+namespace RTree.Test
 {
-	class MainClass
+	[TestFixture()]
+	public class RTreeTest
 	{
-		public static void Main (string[] args)
+		[Test()]
+		public void TestCase()
 		{
-			Console.WriteLine ("Hello World!");
 
-			var test = new RTreeTest();
+			var test = new RTreeTestData();
 			var data = test.Build1DTestData();
 
-//			var x = string.Join("\r\n", data.Item1.Select(xx=>xx[0]));
-//			var y = string.Join("\r\n", data.Item2);
+			//			var x = string.Join("\r\n", data.Item1.Select(xx=>xx[0]));
+			//			var y = string.Join("\r\n", data.Item2);
 
 			var x = data.Item1.Select(xx => xx[0]).ToArray();
 			var y = data.Item2;
@@ -22,7 +25,7 @@ namespace RTree
 			var z = string.Join("\r\n", xy);
 
 
-//			Console.WriteLine(z);
+			//			Console.WriteLine(z);
 
 
 			var settingsWoPruning = new RTreeRegressionSettings(5, PruningType.None, 0.1);
@@ -61,27 +64,39 @@ namespace RTree
 			var xyyyf = xyyy.Zip(forestReggedY, (a, b) => a + ";" + b);
 
 			var zz = string.Join("\r\n", xyyyf);
+			Console.WriteLine("x;y;yTreeNoPruning;yTreePruning;yForest");
 			Console.WriteLine(zz);
 
 			Console.WriteLine ("*** Non Pruned tree ***");
 			Console.WriteLine(reportWoPruning);
 			var treeWoPruning = regWoPruning.Tree;
 			Console.WriteLine(treeWoPruning.Print());
+			Assert.AreEqual(31, treeWoPruning.Size(), "Tree (no pruning) size changed");
 
 
 			Console.WriteLine ("*** Pruned tree ***");
 			Console.WriteLine(report);
 			var tree = reg.Tree;
 			Console.WriteLine(tree.Print());
+			Assert.AreEqual(11, tree.Size(), "Tree (pruned) size changed");
 
 			var root = tree.GetRoot();
 			Console.WriteLine("Root");
-			Console.WriteLine(root.ToString());
+			Console.WriteLine(root);
 
 			var leaves = tree.GetLeaves();
 			Console.WriteLine("Leaves");
 			Console.WriteLine(string.Join("\n", leaves.Select(l=>l.ToString())));
-
+			var expectedLeavesId = new []{ 34, 35, 40, 42, 44, 45};
+			var expectedLeavesSize = new []{ 20, 6, 7, 5, 9, 3};
+			var expectedLeavesValue = new []{ 0.182, 0.477, 0.804, 0.968, 1.074, 1.110};
+			Assert.AreEqual(expectedLeavesId.Count(), leaves.Count, "Tree nb leaves changed");
+			for(int i = 0; i < leaves.Count; i++) 
+			{
+				Assert.AreEqual(expectedLeavesId[i], leaves.ElementAt(i).Id, string.Format("Leaf {0} id changed", i));
+				Assert.AreEqual(expectedLeavesSize[i], leaves.ElementAt(i).Data.NSample, string.Format("Leaf {0} nb elements changed", i));
+				Assert.AreEqual(expectedLeavesValue[i], leaves.ElementAt(i).Data.Average, 1e-3, string.Format("Leaf {0} value changed", i));
+			}
 
 			Console.WriteLine("*** Prune nodes ***");
 			var emptyTree = tree.Prune(tree.GetRoot(), true);
@@ -96,7 +111,7 @@ namespace RTree
 			var otherHalfTree = tree.Prune(tree.GetChildren(root).Item2, true);
 			Console.WriteLine(otherHalfTree.Print());
 
-			var stillSmallerTree = otherHalfTree.Prune(otherHalfTree.GetChildren(otherHalfTree.GetChildren(otherHalfTree.GetChildren(root).Item1).Item1).Item1, true);
+			var stillSmallerTree = otherHalfTree.Prune(otherHalfTree.GetChildren(otherHalfTree.GetChildren(root).Item1).Item1, true);
 			Console.WriteLine(stillSmallerTree.Print());
 
 			Console.WriteLine("*** Prune nodes (start node not included) ***");
@@ -112,10 +127,7 @@ namespace RTree
 
 			var subTreeFromLeaves = tree.SubTree(tree.GetParent(tree.GetLeaves().ElementAt(3)));
 			Console.WriteLine(subTreeFromLeaves.Print());
-//			Console.WriteLine ("******** x *********");
-//			Console.WriteLine(x);
-//			Console.WriteLine ("******** y *********");
-//			Console.WriteLine(y);
 		}
 	}
 }
+
