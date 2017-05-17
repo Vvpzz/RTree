@@ -16,6 +16,19 @@ namespace RTree.Test
 		}
 
 		[Test()]
+		public void BasicTest()
+		{
+			Assert.AreEqual(0, RTree.Depth(0));
+			Assert.AreEqual(1, RTree.Depth(1));
+			Assert.AreEqual(1, RTree.Depth(2));
+			Assert.AreEqual(2, RTree.Depth(3));
+			Assert.AreEqual(2, RTree.Depth(6));
+			Assert.AreEqual(3, RTree.Depth(7));
+			Assert.AreEqual(3, RTree.Depth(14));
+			Assert.AreEqual(4, RTree.Depth(15));
+		}
+
+		[Test()]
 		public void TestAllRegressors()
 		{
 
@@ -124,7 +137,8 @@ namespace RTree.Test
 			var subTree = tree.SubTree(tree.GetChildren(root).Item1);
 			Console.WriteLine(subTree.Print());
 
-			var subTreeFromLeaves = tree.SubTree(tree.GetParent(tree.GetLeaves().ElementAt(3)));
+			int pp;
+			var subTreeFromLeaves = tree.SubTree(tree.GetParent(tree.GetLeaves().ElementAt(3), out pp));
 			Console.WriteLine(subTreeFromLeaves.Print());
 		}
 

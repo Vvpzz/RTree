@@ -7,244 +7,365 @@ namespace RTree
 {
 	public class RTree
 	{
-		//TODO : use set instead of list
-		readonly HashSet<RNode> nodes;
-		readonly Dictionary<RNode, RNode> parents;
-		readonly Dictionary<RNode, Tuple<RNode, RNode>> children;
-		readonly RNode root;
+		readonly List<RNode> nodes;
+		int treeDepth;
 
 		public RTree(RNode root)
 		{
-			this.root = root;
-			nodes = new HashSet<RNode>(){root};
-			if(root == null)
-				return;
-
-			parents = new Dictionary<RNode, RNode>(){{root, null}};
-			children = new Dictionary<RNode, Tuple<RNode, RNode>>();
+			nodes = new List<RNode>(){root};
+			treeDepth = 0;
 		}
 
 		public static RTree Empty()
 		{
-			return new RTree(null);
+			RNode n = null;
+			return new RTree(n);
 		}
 
-//		private RTree(RTree tree) : this(tree.root, tree.nodes, tree.parents, tree.children)
-//		{
-//		}
-
-		private RTree(RNode root, HashSet<RNode> nodes, Dictionary<RNode, RNode> parents, Dictionary<RNode, Tuple<RNode, RNode>> children)
+		private RTree(List<RNode> nodes)
 		{
-			this.root = root;
-			this.nodes = new HashSet<RNode>(nodes);
-			this.parents = new Dictionary<RNode, RNode>(parents);
-			this.children = children.ToDictionary(kv => kv.Key, kv => Tuple.Create(kv.Value.Item1, kv.Value.Item2));
+			this.nodes = new List<RNode>(nodes);
+			this.treeDepth = DepthFromSize(nodes.Count);		
 		}
 
-		public Tuple<RNode, RNode> GetChildren(RNode n){
-			//return parents.Where(kv => kv.Value == n).Select(kv => kv.Key);
-			Tuple<RNode, RNode> kids;
-			if(children.TryGetValue(n, out kids))
-				return kids;
-
-			return kids;
+		public Tuple<RNode, RNode> GetChildren(RNode n)
+		{
+			int i = nodes.IndexOf(n);
+			int lChildPos;
+			return GetChildren(i, out lChildPos);
 		}
 
-		public int Size(){
-			return nodes.Count;
+		public Tuple<RNode, RNode> GetChildren(int pos, out int leftChildPos)
+		{
+			leftChildPos = ChildIndex(pos);
+
+			if(leftChildPos >= nodes.Count)
+			{
+				leftChildPos = -1;
+				return null;
+			}
+
+			
+			return Tuple.Create(nodes[leftChildPos], nodes[leftChildPos + 1]);
+		}
+
+		//TODO : find smthg faster
+		public int Size()
+		{
+			return nodes.Count(n => n != null);
 		}
 
 		public RNode GetRoot()
 		{
-			//return parents.Where(kv => kv.Value == null).Select(kv => kv.Key).Single();
-			return root;
+			return nodes[0];
 		}
 
-		public RNode TryGetRoot()
+
+		public RNode GetParent(RNode n, out int parentPos)
 		{
-			return root;
-			//return parents.Where(kv => kv.Value == null).Select(kv => kv.Key).SingleOrDefault();
+			int i = nodes.IndexOf(n);
+			return GetParent(i, out parentPos);
 		}
 
-		public RNode GetParent(RNode n){
-			RNode res;
-			if (parents.TryGetValue(n, out res))
-				return res;
-
-			throw new ArgumentException("Node not found in tree!");
-		}
-
-		public void AddChildNodes (RNode parent, Tuple<RNode, RNode> lAndRChildren)
+		public RNode GetParent(int pos, out int parentPos)
 		{
-//			if(parent == null)
-//			{
-//				//root node
-//				nodes.Add(child);
-//				parents.Add(null, child);
-//				return;
-//			}
+			parentPos = ParentIndex(pos);
 
-			var lChild = lAndRChildren.Item1;
-			var rChild = lAndRChildren.Item2;
-			nodes.Add(lChild);
-			nodes.Add(rChild);
-			parents.Add(lChild, parent);
-			parents.Add(rChild, parent);
+			return parentPos < 0 ? null : nodes[parentPos];
+		}
 
-			//Root node is noone's child
-			if(parent == null)
+		private int ParentIndex(int childIndex)
+		{
+			if(childIndex>0)
+				return (childIndex - 1) / 2;
+			
+			return -1;
+		}
+
+		private int ChildIndex(int parentIndex)
+		{
+			return 2 * parentIndex + 1;
+		}
+
+
+		public static int Depth(int pos)
+		{
+			int i = 0;
+			int l = 1;
+			int u = 2;
+			while(!(l - 1 <= pos && pos < u - 1)) 
+			{
+				i++;
+				l *= 2;
+				u *= 2;
+			}
+
+			return i;
+		}
+
+		public static int DepthFromSize(int size)
+		{
+			if(size == 0)
+				return 0;
+
+			int pow = 1;
+			int d = 1;
+			int s = size;
+			while(s > 1) 
+			{
+				s /= 2;
+				d += 1;
+				pow *= 2;
+			}
+
+			//sum of series 1+2+4+8+....+2^(d-1) = 2^d-1
+			if(size - 2 * pow + 1 != 0)
+				throw new ArgumentException("Wrong size!");
+
+			return d;
+		}
+
+		private void Resize(int pos)
+		{
+			//if index is < internal storage size, do nothing
+			if(pos <= nodes.Count)
 				return;
 
-//			Tuple<RNode, RNode> kids;
-//			if(children.TryGetValue(parent, out kids))
-//				kids.Add(lAndRChildren);
-//			else
-//				children.Add(parent, new List<RNode>(){ child });
-			children.Add(parent, lAndRChildren);
-		}
-
-//		public void AddChildren(RNode parent, List<RNode> children){
-//			foreach (var child in children) {
-//				AddChild(parent, child);
+			//else increment tree depth and resize internal storage
+			var d = Depth(pos) + 1;
+			//sum of series 1+2+4+8+....+2^(d-1)
+			int size = (int)(Math.Pow(2, d)-1);
+//			for(int i = 0; i < Math.Max(0, size - nodes.Count); i++) {
+//				nodes.Add(null);
 //			}
-//		}
+			if(size <= nodes.Count)
+				throw new ArgumentException("Something is wrong in resize");
 
-		public HashSet<RNode> GetLeaves()
-		{
-			var parentNodes = children.Keys;//parents.Values.Distinct();
-			return new HashSet<RNode>(nodes.Where(n => !parentNodes.Contains(n)));
+			nodes.AddRange(new RNode[size - nodes.Count]);
+			treeDepth = d;
 		}
 
-		public HashSet<RNode> GetInternalNodes()
+		public void AddChildNodes(RNode n, RNode leftChild, RNode rightChild, out int leftChildPos)
 		{
-			return new HashSet<RNode>(nodes.Except(GetLeaves()));
+			int i = nodes.IndexOf(n);
+			AddChildNodes(i, leftChild, rightChild, out leftChildPos);
+		}
+
+
+		public void AddChildNodes(int parentPos, RNode leftChild, RNode rightChild, out int leftChildPos)
+		{
+			leftChildPos = ChildIndex(parentPos);
+
+			Resize(leftChildPos + 1);
+
+			nodes[leftChildPos] = leftChild;
+			nodes[leftChildPos+1] = rightChild;
+		}
+
+		public List<RNode> GetSlice(int depth)
+		{
+			int i = (int)Math.Pow(2, depth);
+			return nodes.GetRange(i - 1, i);
+		}
+
+		public Tuple<int, int> GetSliceRange(int depth)
+		{
+			int i = (int)Math.Pow(2, depth);
+			return Tuple.Create(i - 1, i);
+		}
+
+		public List<RNode> GetLeaves()
+		{
+			//single node : root = leaf
+			if(treeDepth == 0)
+				return new List<RNode>(){ nodes[0] };
+			
+			var leavesRg = GetSliceRange(treeDepth - 1);
+
+//			for(int i = 0; i < leaves.Count; i++) 
+//			{
+//				var l = leaves[i];
+//				int ii = i;
+//				while(l == null)
+//					l = GetParent(ii, out ii);
+//
+//				leaves[i] = l;
+//			}
+
+			var start = leavesRg.Item1;
+			var len = leavesRg.Item2;
+			var leaves = new List<RNode>(len);
+			for(int i = 0; i < len; i++) 
+			{
+				var idx = start + i;
+				var l = nodes[idx];
+				int ii = idx;
+				while(l == null)
+					l = GetParent(ii, out ii);
+
+				//TODO : find smthg faster
+				if(!leaves.Contains(l))
+					leaves.Add(l);
+			}
+
+			return leaves;
+		}
+
+		public List<int> GetLeavesPos()
+		{
+			//single node : root = leaf
+			if(treeDepth == 0)
+				return new List<int>(){ 0 };
+
+			var leavesRg = GetSliceRange(treeDepth - 1);
+
+			var start = leavesRg.Item1;
+			var len = leavesRg.Item2;
+			var leaves = new List<int>(len);
+			for(int i = 0; i < len; i++) 
+			{
+				var idx = start + i;
+				var l = nodes[idx];
+				int ii = idx;
+				while(l == null)
+					l = GetParent(ii, out ii);
+
+				//TODO : find smthg faster
+				if(!leaves.Contains(ii))
+					leaves.Add(ii);
+			}
+
+			return leaves;
+		}
+
+		//probably slow
+		public List<RNode> GetInternalNodes()
+		{
+			return new List<RNode>(nodes.Except(GetLeaves()));
 		}
 
 		private bool EvaluateFullSplitPath(RNode n, double[] x)
 		{
+			int i = nodes.IndexOf(n);
+			return EvaluateFullSplitPath(n, i, x);
+		}
+
+		private bool EvaluateFullSplitPath(RNode n, int pos, double[] x)
+		{
 			if(!n.NodeSplit.InDomain(x))
 				return false;
 
-			var parent = parents[n];
+			int i = pos;
+			var parent = GetParent(i, out i);
 			if(parent == null)
 				return true;
 
-			return EvaluateFullSplitPath(parent, x);
+			return EvaluateFullSplitPath(parent, i, x);
 		}
-
 
 		public double Evaluate(double[] x)
 		{
-			var leaves = GetLeaves();
+			var leaves = GetLeavesPos();
 			for(int i = 0; i < leaves.Count; i++) 
 			{
-				var leaf = leaves.ElementAt(i);
-				if(EvaluateFullSplitPath(leaf, x))
+				int idx = leaves[i];
+				var leaf = nodes[idx];
+				if(EvaluateFullSplitPath(leaf, idx, x))
 					return leaf.Data.Average;
 			}
 			throw new ArgumentOutOfRangeException("x", "No region for this x ?!");
 		}
 
 		public RTree Clone(){
-			return new RTree(root, nodes, parents, children);
+			return new RTree(nodes);
 		}
 
 		public RTree SubTree(RNode node){
 			var sub = new RTree(node);
-			sub.RecursivePickChildrenFrom(this, node);
+			sub.RecursivePickChildrenFrom(this, node, nodes.IndexOf(node));
 			return sub;
 		}
 
-		public void RecursivePickChildrenFrom(RTree source, RNode node){
+		public void RecursivePickChildrenFrom(RTree source, RNode node, int sourcePos){
 			if(node == null) return;
 
 			var kids = source.GetChildren(node);
 			if(kids == null)
 				return;
-			AddChildNodes(node, kids);
-			RecursivePickChildrenFrom(source, kids.Item1);
-			RecursivePickChildrenFrom(source, kids.Item2);
+			int lChildPos;
+			AddChildNodes(node, kids.Item1, kids.Item2, out lChildPos);
+			RecursivePickChildrenFrom(source, kids.Item1, lChildPos);
+			RecursivePickChildrenFrom(source, kids.Item2, lChildPos + 1);
+		}
+			
+		public RTree Prune(RNode n, bool nodeIncluded)
+		{
+			int pos = nodes.IndexOf(n);
+			return Prune(pos, nodeIncluded);
 		}
 
-//		public RTree Prune(RNode node)
-//		{
-//			var t = Clone();
-//			var rParent = t.GetParent(node);
-//			if(rParent == null) //node is root node : return empty tree
-//				return RTree.Empty();
-//
-//			//remove reference to node as child
-//			var nodeAsChild = t.children[rParent];
-//			if(nodeAsChild.Item1 == node)
-//				nodeAsChild = Tuple.Create<RNode, RNode>(null, nodeAsChild.Item2);
-//			else
-//				nodeAsChild = Tuple.Create<RNode, RNode>(nodeAsChild.Item1, null);
-//			
-//			if(nodeAsChild.Item1 == null && nodeAsChild.Item2 == null)
-//				t.children.Remove(rParent);
-//			else
-//				t.children[rParent] = nodeAsChild;
-//
-//			//remove node's children recursively
-//			var kids = t.GetChildren(node);
-//			if(kids != null) 
-//			{
-//				t.Prune(kids.Item1);
-//				t.Prune(kids.Item2);
-//			}
-//
-//			//cleaning containers
-//			t.nodes.Remove(node);
-//			t.parents.Remove(node);
-//			t.children.Remove(node);
-//
-//			return t;
-//		}
-
-		public RTree Prune(RNode node, bool nodeIncluded)
+		public RTree Prune(int pos, bool nodeIncluded)
 		{
 			var t = Clone();
-
-			//remove node's children recursively
-			var kids = t.GetChildren(node);
-			if(kids != null) 
+			int leftChildPos;
+			var children = t.GetChildren(pos, out leftChildPos);
+			if(children != null) 
 			{
-				t = t.Prune(kids.Item1, true);
-				t = t.Prune(kids.Item2, true);
+//				t = t.RemoveNode(children.Item1, true);
+//				t = t.RemoveNode(children.Item2, true);
+				t = t.Prune(leftChildPos, true);
+				t = t.Prune(leftChildPos + 1, true);
 			}
 
 			if(!nodeIncluded)
 				return t;
-				
-			var rParent = t.GetParent(node);
-			if(rParent == null) //node is root node : return empty tree
+
+			int parentPos;
+			var rParent = t.GetParent(pos, out parentPos);
+			if(parentPos < 0) //node is root node : return empty tree
 				return RTree.Empty();
 
-			//remove reference to node as child
-			var nodeAsChild = t.children[rParent];
-			if(nodeAsChild.Item1 == node)
-				nodeAsChild = Tuple.Create<RNode, RNode>(null, nodeAsChild.Item2);
-			else
-				nodeAsChild = Tuple.Create<RNode, RNode>(nodeAsChild.Item1, null);
+			if(pos < 0 || t.nodes.Count <= pos)
+				throw new ArgumentException();
 
-			if(nodeAsChild.Item1 == null && nodeAsChild.Item2 == null)
-				t.children.Remove(rParent);
-			else
-				t.children[rParent] = nodeAsChild;
-
-			//cleaning containers
-			t.nodes.Remove(node);
-			t.parents.Remove(node);
-			t.children.Remove(node);
+			t.nodes[pos] = null;
 
 			return t;
+		}
+
+		void Chop()
+		{
+
+			var leavesRg = GetSliceRange(treeDepth - 1);
+
+			var start = leavesRg.Item1;
+			var len = leavesRg.Item2;
+
+			bool canChop = true;
+			for(int i = 0; i < len; i++) {
+				if(nodes[start + i] != null) {
+					canChop = false;
+					continue;
+				}
+			}
+
+			if(!canChop)
+				return;
+			
+			nodes.RemoveRange(start, len);
+			treeDepth -= 1;
+			Chop();
+
+
 		}
 
 		public RTree CCPrune(double pruningWeight, out double mse){
 			double bestMse = double.PositiveInfinity;
 			RTree bestTree = null;
 			for(int i = 0; i < nodes.Count; i++) {
-				var tmpTree = Prune(nodes.ElementAt(i), false);
+				var tmpTree = Prune(nodes[i], false);
+				//TODO : Chop() should be part of Prune
+				tmpTree.Chop();
 				var tmpMse = tmpTree.CostComplexityCriterion(pruningWeight);//tmpTree.MSE();
 				if(tmpMse<bestMse)
 				{
@@ -261,7 +382,7 @@ namespace RTree
 			var nLeaves = leaves.Count;
 			double cc = pruningWeight * nLeaves;
 			for(int i = 0; i < nLeaves; i++) {
-				cc += leaves.ElementAt(i).Data.MSE;
+				cc += leaves[i].Data.MSE;
 				//TODO : break loop if cc > threshold passed as parameter (i.e. stop evaluate MSE if already too big)
 			}
 			return cc;
@@ -273,7 +394,7 @@ namespace RTree
 			var nLeaves = leaves.Count;
 			double mse = 0.0;
 			for(int i = 0; i < nLeaves; i++) {
-				mse += leaves.ElementAt(i).Data.MSE;
+				mse += leaves[i].Data.MSE;
 				//TODO : break loop if cc > threshold passed as parameter (i.e. stop evaluate MSE if already too big)
 			}
 			return mse;
@@ -286,7 +407,7 @@ namespace RTree
 		public string Print(RNode n = null, string prefix = null)
 		{
 			if(n == null)
-				n = TryGetRoot();
+				n = GetRoot();
 
 			if(n==null)
 				return "Null tree";

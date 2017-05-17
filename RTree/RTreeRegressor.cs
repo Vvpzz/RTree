@@ -124,7 +124,8 @@ namespace RTree
 
 		private RTree BuildFullTree(RData data, out double mse)
 		{
-			var rootNode = new RNode(RRegionSplit.None(), data);
+//			var rootNode = new RNode(RRegionSplit.None(), data);
+			var rootNode = RNode.Root(data);
 			var buildTree = new RTree(rootNode);
 			//Tree.AddChild(null, rootNode);
 			RecursiveBuildFullTree(buildTree, rootNode);
@@ -169,7 +170,8 @@ namespace RTree
 			//TODO : add info in report
 			var nodeL = new RNode(bestRegionSplit, bestDataL);
 			var nodeR = new RNode(bestRegionSplit.Complement(), bestDataR);
-			t.AddChildNodes(node, Tuple.Create( nodeL, nodeR ));
+			int leftChildPos;
+			t.AddChildNodes(node, nodeL, nodeR, out leftChildPos);
 			RecursiveBuildFullTree(t, nodeL);
 			RecursiveBuildFullTree(t, nodeR);
 		}

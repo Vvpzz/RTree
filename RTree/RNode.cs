@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace RTree
 {
@@ -24,14 +23,21 @@ namespace RTree
 		}
 	}
 
-	public class RNode : BaseRNode{
+	public class RNode : BaseRNode
+	{
 		public RRegionSplit NodeSplit { get; private set; }
 		public RData Data { get; private set; }
+//		public int Position {get; private set;}
 
 		public RNode(RRegionSplit split, RData data)
 		{
 			NodeSplit = split;
 			Data = data;
+		}
+
+		public static RNode Root(RData data)
+		{
+			return new RNode(RRegionSplit.None(), data);
 		}
 
 		public override string ToString(){
