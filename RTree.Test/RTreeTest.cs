@@ -18,14 +18,14 @@ namespace RTree.Test
 		[Test()]
 		public void BasicTest()
 		{
-			Assert.AreEqual(0, RTree.Depth(0));
-			Assert.AreEqual(1, RTree.Depth(1));
-			Assert.AreEqual(1, RTree.Depth(2));
-			Assert.AreEqual(2, RTree.Depth(3));
-			Assert.AreEqual(2, RTree.Depth(6));
-			Assert.AreEqual(3, RTree.Depth(7));
-			Assert.AreEqual(3, RTree.Depth(14));
-			Assert.AreEqual(4, RTree.Depth(15));
+			Assert.AreEqual(0, RTree.DepthAtPos(0));
+			Assert.AreEqual(1, RTree.DepthAtPos(1));
+			Assert.AreEqual(1, RTree.DepthAtPos(2));
+			Assert.AreEqual(2, RTree.DepthAtPos(3));
+			Assert.AreEqual(2, RTree.DepthAtPos(6));
+			Assert.AreEqual(3, RTree.DepthAtPos(7));
+			Assert.AreEqual(3, RTree.DepthAtPos(14));
+			Assert.AreEqual(4, RTree.DepthAtPos(15));
 		}
 
 		[Test()]
@@ -40,8 +40,8 @@ namespace RTree.Test
 			var xy = x.Zip(y, (a,b)=>a+";"+b);
 			var z = string.Join("\r\n", xy);
 
-			var settingsWoPruning = new RTreeRegressionSettings(5, PruningType.None, 0.1);
-			var settings = new RTreeRegressionSettings(10, PruningType.CostComplexity, 0.1);
+			var settingsWoPruning = new RTreeRegressionSettings(5, 1000, PruningType.None, 0.1);
+			var settings = new RTreeRegressionSettings(10, 1000, PruningType.CostComplexity, 0.1);
 
 			var regWoPruning = new RTreeRegressor(settingsWoPruning);
 			var reportWoPruning = regWoPruning.Train(data.Item1, data.Item2);
@@ -62,7 +62,7 @@ namespace RTree.Test
 			}
 
 			//TODO : test split variable
-			var forestSettings = new RForestRegressionSettings(10, 0.6, 5, 0);
+			var forestSettings = new RForestRegressionSettings(10, 0.6, 5, 10000, 0);
 			var forestReg = new RForestRegressor(forestSettings);
 			forestReg.Train(data.Item1, data.Item2);
 			var forestReggedY = new List<double>();
@@ -83,14 +83,14 @@ namespace RTree.Test
 			Console.WriteLine(reportWoPruning);
 			var treeWoPruning = regWoPruning.Tree;
 			Console.WriteLine(treeWoPruning.Print());
-			Assert.AreEqual(31, treeWoPruning.Size(), "Tree (no pruning) size changed");
+			Assert.AreEqual(31, treeWoPruning.NbNodes, "Tree (no pruning) size changed");
 
 
 			Console.WriteLine ("*** Pruned tree ***");
 			Console.WriteLine(report);
 			var tree = reg.Tree;
 			Console.WriteLine(tree.Print());
-			Assert.AreEqual(11, tree.Size(), "Tree (pruned) size changed");
+			Assert.AreEqual(11, tree.NbNodes, "Tree (pruned) size changed");
 
 			var root = tree.GetRoot();
 			Console.WriteLine("Root");
@@ -151,7 +151,7 @@ namespace RTree.Test
 			var xy = x.Zip(y, (a,b)=>a+";"+b);
 
 			//TODO : test higher dimensions & split variable
-			var forestSettings = new RForestRegressionSettings(150, 0.6, 100, 0);
+			var forestSettings = new RForestRegressionSettings(150, 0.6, 100, 10000, 0);
 			var forestReg = new RForestRegressor(forestSettings);
 			forestReg.Train(data.Item1, data.Item2);
 			var forestReggedY = new List<double>();
@@ -162,9 +162,6 @@ namespace RTree.Test
 
 			var xyf = xy.Zip(forestReggedY, (a, b) => a + ";" + b);
 
-//			var zz = string.Join("\r\n", xyf);
-//			Console.WriteLine("x;y;yTreeNoPruning;yTreePruning;yForest");
-//			Console.WriteLine(zz);
 		}
 	}
 }

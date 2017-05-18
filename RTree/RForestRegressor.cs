@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace RTree
 {
@@ -10,14 +9,16 @@ namespace RTree
 		public int NbTrees {get; private set;}
 		public double SampleProportion {get; private set;}
 		public int MinNodeSize {get; private set;}
+		public int MaxTreeDepth {get; private set;}
 		public int NbSplitVariables {get; private set;}
 
 		//TODO : see settings for limiting tree size
-		public RForestRegressionSettings(int nbTrees, double sampleProportion, int minNodeSize, int nbSplitVariables)
+		public RForestRegressionSettings(int nbTrees, double sampleProportion, int minNodeSize, int maxTreeDepth, int nbSplitVariables)
 		{
 			NbTrees = nbTrees;
 			SampleProportion = sampleProportion;
 			MinNodeSize = minNodeSize;
+			MaxTreeDepth = maxTreeDepth;
 			NbSplitVariables = nbSplitVariables;
 		}
 		
@@ -44,45 +45,32 @@ namespace RTree
 
 			var data = RData.FromRawData(x, y);
 			return Train(data);
-//			var dataSize = data.NSample;
-//			var nTrees = settings.NbTrees;
-//			var trees = new List<RTree>(nTrees);
-//			var rand = new Random(1234);
-//			var bs = new BootStrap(rand, dataSize, (int)(dataSize * settings.SampleProportion));
-//			var treeSettings = new RTreeRegressionSettings(settings.MinNodeSize, PruningType.None, double.NaN);
-//			for(int i = 0; i < nTrees; i++) {
-//				var bsIndices = bs.DoSample();
-//				var bsData = data.BootStrap(bsIndices);
-//				trees.Add(GrowTree(bsData, settings.NbSplitVariables, treeSettings));
-//			}
-//
-//			forest = new RForest(trees);
-//
-//			return new RForestRegressionReport();
 		}
 
 		public RForestRegressionReport Train(RData data)
 		{
-//			var data = RData.FromRawData(x, y);
 			var dataSize = data.NSample;
 			var nTrees = settings.NbTrees;
 			var trees = new List<RTree>(nTrees);
 			var rand = new Random(1234);
 			var bs = new BootStrap(rand, dataSize, (int)(dataSize * settings.SampleProportion));
-			var treeSettings = new RTreeRegressionSettings(settings.MinNodeSize, PruningType.None, double.NaN, settings.NbSplitVariables);
+			var treeSettings = new RTreeRegressionSettings(settings.MinNodeSize, settings.MaxTreeDepth, PruningType.None, double.NaN, settings.NbSplitVariables);
 
 			for(int i = 0; i < nTrees; i++) 
 			{
 				var sw = Stopwatch.StartNew();
 				var bsIndices = bs.DoSample();
 				var bsData = data.BootStrap(bsIndices);
-				trees.Add(GrowTree(bsData, treeSettings));
+				var t = GrowTree(bsData, treeSettings);
+				trees.Add(t);
 				sw.Stop();
-				Console.WriteLine (string.Format("Build tree {0}/{1} [n={3}][{2}]", i+1, nTrees, sw.Elapsed, trees.Last().Size()));
+//				Console.WriteLine(t.Print());
+				Console.WriteLine (string.Format("Build tree {0}/{1} [n={3}][d={4}][{2}]", i+1, nTrees, sw.Elapsed, t.NbNodes, t.Depth));
 			}
 
 			forest = new RForest(trees);
 
+			//TODO
 			return new RForestRegressionReport();
 		}
 
@@ -90,7 +78,6 @@ namespace RTree
 		{
 			var treeReg = new RTreeRegressor(treeSettings);
 			double mse;
-//			return treeReg.BuildFullTree(data, out mse);
 			var report = treeReg.Train(data);
 			return treeReg.Tree;
 		}
@@ -98,14 +85,6 @@ namespace RTree
 		public double Evaluate(double[] x)
 		{
 			return forest.Evaluate(x);
-//			//var trees = forest.Trees;
-//			var nTrees = settings.NbTrees;
-//			var res = 0;
-//			for(int i = 0; i < nTrees; i++) {
-//				res += treeRegs[i].Evaluate;
-//				//TODO : stocker les tree reg au lieu des trees!
-//			}
-//			return res / nTrees;
 		}
 	}
 }

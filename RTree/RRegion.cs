@@ -3,51 +3,24 @@ using System.Collections.Generic;
 
 namespace RTree
 {
-//	public class RRegion{
-//		public List<RRegionSplit> splits;
-//
-//		public RRegion()
-//		{
-//			splits = new List<RRegionSplit>();
-//		}
-//
-//		public RRegion Append(RRegionSplit split){
-//			splits.Add(split);
-//		}
-//			
-//
-//		public bool InDomain(double[] xs){			
-//			for(int i = 0; i < splits.Count; i++)
-//				//idea : last added splits are more discriminant than the first ones?
-//				//for(int i = splits.Count-1; i >= 0; i--) 
-//			{
-//				if(!splits[i].InDomain(xs)) return false;
-//			}
-//			return true;
-//		}
-//
-//	}
-
 	public class RRegionSplit{
 		readonly int varId;
 		readonly double varLimit;
 		readonly bool strictlyGreater;
-		readonly Func<double, bool> inDomain;
 
 		public RRegionSplit(int varId, double varLimit, bool strictlyGreater)
 		{
 			this.varId = varId;
 			this.varLimit = varLimit;
 			this.strictlyGreater = strictlyGreater;
-			if(strictlyGreater)
-				inDomain = x => x > varLimit;
-			else 
-				inDomain =  x => x <= varLimit;				
 		}
 
 		public bool InDomain(double[] xs)
 		{
-			return inDomain(xs[varId]);
+			if(strictlyGreater)
+				return xs[varId] > varLimit;
+			else 
+				return xs[varId] <= varLimit;	
 		}
 
 		public RRegionSplit Complement()
@@ -65,5 +38,67 @@ namespace RTree
 			return string.Format("x{0} {1} {2:N1}", varId, strictlyGreater ? ">" : "<=", varLimit);
 		}
 	}
+
+//	public abstract class RRegionSplit{
+//		protected readonly int varId;
+//		protected readonly double varLimit;
+//
+//		public RRegionSplit(int varId, double varLimit)
+//		{
+//			this.varId = varId;
+//			this.varLimit = varLimit;
+//		}
+//
+//		public abstract bool InDomain(double[] xs);
+//
+//		public static UpperRegionSplit None()
+//		{
+//			return new UpperRegionSplit(0, double.NegativeInfinity);
+//		}
+//	}
+//
+//	public class LowerRegionSplit : RRegionSplit
+//	{
+//		public LowerRegionSplit(int varId, double varLimit) : base(varId, varLimit)
+//		{
+//		}
+//
+//		public override bool InDomain(double[] xs)
+//		{
+//			return xs[varId] <= varLimit;
+//		}
+//
+//		public UpperRegionSplit Complement()
+//		{
+//			return new UpperRegionSplit(varId, varLimit);
+//		}
+//
+//		public override string ToString()
+//		{
+//			return string.Format("x{0} {1} {2:N1}", varId, "<=", varLimit);
+//		}
+//	}
+//
+//	public class UpperRegionSplit : RRegionSplit
+//	{
+//		public UpperRegionSplit(int varId, double varLimit) : base(varId, varLimit)
+//		{
+//		}
+//
+//		public override bool InDomain(double[] xs)
+//		{
+//			return xs[varId] > varLimit;
+//		}
+//
+//		public LowerRegionSplit Complement()
+//		{
+//			return new LowerRegionSplit(varId, varLimit);
+//		}
+//
+//		public override string ToString()
+//		{
+//			return string.Format("x{0} {1} {2:N1}", varId, ">", varLimit);
+//		}
+//	}
 }
 

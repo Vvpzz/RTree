@@ -2,12 +2,12 @@
 
 namespace RTree
 {
-	public interface IRNode : IEquatable<IRNode>{
-		int Id {get;}
-	}
+//	public interface IRNode : IEquatable<IRNode>{
+//		int Id {get;}
+//	}
 
 	//TODO : distinguish left nodes (<=) from right nodes (>)?
-	public class BaseRNode:IRNode
+	public class BaseRNode//:IEquatable<BaseRNode>//:IRNode
 	{
 		static int staticId = 0;
 		public int Id {get; private set;}
@@ -17,10 +17,11 @@ namespace RTree
 			Id = staticId++;
 		}
 
-		bool IEquatable<IRNode>.Equals (IRNode other)
-		{
-			return Id == other.Id;
-		}
+//		bool IEquatable<IRNode>.Equals (IRNode other)
+//		bool IEquatable<BaseRNode>.Equals (BaseRNode other)
+//		{
+//			return Id == other.Id;
+//		}
 	}
 
 	public class RNode : BaseRNode

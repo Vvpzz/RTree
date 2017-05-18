@@ -12,16 +12,18 @@ namespace RTree
 
 	public class RTreeRegressionSettings{
 		public int MinNodeSize {get; private set;}
+		public int MaxTreeDepth {get; private set;}
 		public PruningType PruningType {get; private set;}
 		public double PruningCriterion {get; private set;}
 		public int NbSplitVariables {get; private set;}
 
-		public RTreeRegressionSettings(int minNodeSize, PruningType pruningType, double pruningCriterion, int nbSplitVariables = 0)
+		public RTreeRegressionSettings(int minNodeSize, int maxTreeDepth, PruningType pruningType, double pruningCriterion, int nbSplitVariables = 0)
 		{
-			if(minNodeSize<=0 || pruningCriterion<0)
+			if(minNodeSize<=0 || maxTreeDepth<0 || pruningCriterion<0)
 				throw new ArgumentException("Wrong regression settings!");
 			
 			MinNodeSize = minNodeSize;
+			MaxTreeDepth = maxTreeDepth;
 			PruningType = pruningType;
 			PruningCriterion = pruningCriterion;
 			NbSplitVariables = nbSplitVariables;
@@ -72,17 +74,10 @@ namespace RTree
 		{
 			var data = RData.FromRawData(x, y);
 			return Train(data);
-//			double mseBeforePruning;
-//			var largeTree = BuildFullTree(data, out mseBeforePruning);
-//			double mseAfterPruning;
-//			var prunedTree = PruneTree(largeTree, out mseAfterPruning);
-//			Report = new RTreeRegressionReport(mseBeforePruning, mseAfterPruning, largeTree.Size(), prunedTree.Size());
-//			return Report;
 		}
 
 		public RTreeRegressionReport Train(RData data)
 		{
-//			var data = RData.FromRawData(x, y);
 			double mseBeforePruning;
 			var largeTree = BuildFullTree(data, out mseBeforePruning);
 			double mseAfterPruning;
@@ -90,55 +85,31 @@ namespace RTree
 
 			Tree = prunedTree;
 
-			Report = new RTreeRegressionReport(mseBeforePruning, mseAfterPruning, largeTree.Size(), prunedTree.Size());
+			Report = new RTreeRegressionReport(mseBeforePruning, mseAfterPruning, largeTree.NbNodes, prunedTree.NbNodes);
 			return Report;
 		}
 
-		//TODO : move to RTree : a tree should know how to evaluate one self
-		// 3 levels : regressor, data structure, data structure builder
 		public double Evaluate(double[] x){
 			return Tree.Evaluate(x);
-//			var leaves = Tree.GetLeaves();
-//			for(int i = 0; i < leaves.Count; i++) 
-//			{
-//				var leaf = leaves.ElementAt(i);
-//				if(Tree.EvaluateFullSplitPath(leaf, x))
-//					return leaf.Data.Average;
-//			}
-//			throw new ArgumentOutOfRangeException("x", "No region for this x ?!");
 		}
 			
 
-//		public RTree BuildFullTree(double[][] x, double[] y, out double mse)
-//		{
-//			var data = RData.FromRawData(x, y);
-//			var rootNode = new RNode(RRegionSplit.None(), data);
-//			Tree = new RTree(rootNode);
-//			//Tree.AddChild(null, rootNode);
-//			RecursiveBuildFullTree(Tree, rootNode);
-//
-//			mse = Tree.MSE();
-//
-//			return Tree;
-//		}
-
 		private RTree BuildFullTree(RData data, out double mse)
 		{
-//			var rootNode = new RNode(RRegionSplit.None(), data);
 			var rootNode = RNode.Root(data);
 			var buildTree = new RTree(rootNode);
-			//Tree.AddChild(null, rootNode);
-			RecursiveBuildFullTree(buildTree, rootNode);
+			RecursiveBuildFullTree(buildTree, rootNode, 0);
 
 			mse = buildTree.MSE();
 
 			return buildTree;
 		}
 
-		private void RecursiveBuildFullTree(RTree t, RNode node)
+		private void RecursiveBuildFullTree(RTree t, RNode node, int pos)
 		{
 			var data = node.Data;
-			if(data.NSample <= settings.MinNodeSize)
+			var nodeDepth = RTree.DepthAtPos(pos);
+			if(data.NSample <= settings.MinNodeSize || nodeDepth >= settings.MaxTreeDepth)
 				return;
 			var minMse = double.PositiveInfinity;
 
@@ -147,7 +118,7 @@ namespace RTree
 
 			RData bestDataL = null, bestDataR = null;
 			RRegionSplit bestRegionSplit = null;
-//			for(int varId = 0; varId < data.NVars; varId++) 
+//			LowerRegionSplit bestRegionSplit = null;
 			for(int i = 0; i < nSplitVars; i++) 
 			{				
 				int varId = splitVars[i];
@@ -155,9 +126,10 @@ namespace RTree
 				for (int j = 0; j < splits.Length; j++) 
 				{
 					var rSplit = new RRegionSplit(varId, splits[j], false);
+//					var rSplit = new LowerRegionSplit(varId, splits[j]);
 					var partitions = data.Partitions(rSplit);
-					var dataL = partitions[0].Item2;
-					var dataR = partitions[1].Item2;
+					var dataL = partitions[0];
+					var dataR = partitions[1];
 					var mse = dataL.MSE + dataR.MSE;
 					if(mse<minMse){
 						minMse = mse;
@@ -172,8 +144,8 @@ namespace RTree
 			var nodeR = new RNode(bestRegionSplit.Complement(), bestDataR);
 			int leftChildPos;
 			t.AddChildNodes(node, nodeL, nodeR, out leftChildPos);
-			RecursiveBuildFullTree(t, nodeL);
-			RecursiveBuildFullTree(t, nodeR);
+			RecursiveBuildFullTree(t, nodeL, leftChildPos);
+			RecursiveBuildFullTree(t, nodeR, leftChildPos + 1);
 		}
 
 		private static int[] GetSplitVars(int nVars, int nSplitVars)
@@ -203,11 +175,9 @@ namespace RTree
 				break;
 			case PruningType.None:
 				mse = double.NaN;
-//				prunedTree = largeTree;
 				break;
 			default:
 				throw new ArgumentException("Unknown pruning type");
-//				break;
 			}
 
 			return prunedTree;

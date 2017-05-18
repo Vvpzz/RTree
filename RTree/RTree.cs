@@ -10,6 +10,9 @@ namespace RTree
 		readonly List<RNode> nodes;
 		int treeDepth;
 
+		//set at first evaluation, once the tree is build, and reused after
+		List<int> leaves;
+
 		public RTree(RNode root)
 		{
 			nodes = new List<RNode>(){root};
@@ -25,7 +28,7 @@ namespace RTree
 		private RTree(List<RNode> nodes)
 		{
 			this.nodes = new List<RNode>(nodes);
-			this.treeDepth = DepthFromSize(nodes.Count);		
+			this.treeDepth = TreeDepth();		
 		}
 
 		public Tuple<RNode, RNode> GetChildren(RNode n)
@@ -50,9 +53,14 @@ namespace RTree
 		}
 
 		//TODO : find smthg faster
-		public int Size()
+		public int NbNodes
 		{
-			return nodes.Count(n => n != null);
+			get{ return nodes.Count(n => n != null); }
+		}
+
+		public int Depth
+		{
+			get{ return TreeDepth(); }
 		}
 
 		public RNode GetRoot()
@@ -82,13 +90,13 @@ namespace RTree
 			return -1;
 		}
 
-		private int ChildIndex(int parentIndex)
+		public static int ChildIndex(int parentIndex)
 		{
 			return 2 * parentIndex + 1;
 		}
 
 
-		public static int Depth(int pos)
+		public static int DepthAtPos(int pos)
 		{
 			int i = 0;
 			int l = 1;
@@ -103,13 +111,14 @@ namespace RTree
 			return i;
 		}
 
-		public static int DepthFromSize(int size)
+		private int TreeDepth()
 		{
+			int size = nodes.Count;
 			if(size == 0)
 				return 0;
 
 			int pow = 1;
-			int d = 1;
+			int d = 0;
 			int s = size;
 			while(s > 1) 
 			{
@@ -132,17 +141,15 @@ namespace RTree
 				return;
 
 			//else increment tree depth and resize internal storage
-			var d = Depth(pos) + 1;
+			var d = DepthAtPos(pos) + 1;
 			//sum of series 1+2+4+8+....+2^(d-1)
 			int size = (int)(Math.Pow(2, d)-1);
-//			for(int i = 0; i < Math.Max(0, size - nodes.Count); i++) {
-//				nodes.Add(null);
-//			}
+
 			if(size <= nodes.Count)
 				throw new ArgumentException("Something is wrong in resize");
 
 			nodes.AddRange(new RNode[size - nodes.Count]);
-			treeDepth = d;
+			treeDepth = TreeDepth();
 		}
 
 		public void AddChildNodes(RNode n, RNode leftChild, RNode rightChild, out int leftChildPos)
@@ -180,17 +187,7 @@ namespace RTree
 			if(treeDepth == 0)
 				return new List<RNode>(){ nodes[0] };
 			
-			var leavesRg = GetSliceRange(treeDepth - 1);
-
-//			for(int i = 0; i < leaves.Count; i++) 
-//			{
-//				var l = leaves[i];
-//				int ii = i;
-//				while(l == null)
-//					l = GetParent(ii, out ii);
-//
-//				leaves[i] = l;
-//			}
+			var leavesRg = GetSliceRange(treeDepth);
 
 			var start = leavesRg.Item1;
 			var len = leavesRg.Item2;
@@ -217,7 +214,7 @@ namespace RTree
 			if(treeDepth == 0)
 				return new List<int>(){ 0 };
 
-			var leavesRg = GetSliceRange(treeDepth - 1);
+			var leavesRg = GetSliceRange(treeDepth);
 
 			var start = leavesRg.Item1;
 			var len = leavesRg.Item2;
@@ -265,7 +262,7 @@ namespace RTree
 
 		public double Evaluate(double[] x)
 		{
-			var leaves = GetLeavesPos();
+			leaves = leaves ?? GetLeavesPos();
 			for(int i = 0; i < leaves.Count; i++) 
 			{
 				int idx = leaves[i];
@@ -336,7 +333,7 @@ namespace RTree
 		void Chop()
 		{
 
-			var leavesRg = GetSliceRange(treeDepth - 1);
+			var leavesRg = GetSliceRange(treeDepth);
 
 			var start = leavesRg.Item1;
 			var len = leavesRg.Item2;
@@ -378,11 +375,11 @@ namespace RTree
 		}
 
 		private double CostComplexityCriterion(double pruningWeight){
-			var leaves = GetLeaves();
-			var nLeaves = leaves.Count;
+			var lvs = GetLeaves();
+			var nLeaves = lvs.Count;
 			double cc = pruningWeight * nLeaves;
 			for(int i = 0; i < nLeaves; i++) {
-				cc += leaves[i].Data.MSE;
+				cc += lvs[i].Data.MSE;
 				//TODO : break loop if cc > threshold passed as parameter (i.e. stop evaluate MSE if already too big)
 			}
 			return cc;
@@ -390,11 +387,11 @@ namespace RTree
 
 
 		public double MSE(){
-			var leaves = GetLeaves();
-			var nLeaves = leaves.Count;
+			var lvs = GetLeaves();
+			var nLeaves = lvs.Count;
 			double mse = 0.0;
 			for(int i = 0; i < nLeaves; i++) {
-				mse += leaves[i].Data.MSE;
+				mse += lvs[i].Data.MSE;
 				//TODO : break loop if cc > threshold passed as parameter (i.e. stop evaluate MSE if already too big)
 			}
 			return mse;

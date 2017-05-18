@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace RTree
 {
@@ -12,6 +13,7 @@ namespace RTree
 
 		static void Main() 
 		{
+			var sw = Stopwatch.StartNew();
 
 //			var test = new RTreeTestData();
 //			var data = test.Build1DTestData(5000);
@@ -37,25 +39,25 @@ namespace RTree
 
 
 			var test = new RTreeTestData();
-			var data = test.Build1DTestData(10000);
+			var data = test.Build1DTestData(15000);
 //			var data = test.Build1DTestData(30000);
 			var x = data.Item1.Select(xx => xx[0]).ToArray();
 			var y = data.Item2;
 			var xy = x.Zip(y, (a,b)=>a+";"+b);
 
 			//TODO : test higher dimensions & split variable
-			var forestSettings = new RForestRegressionSettings(1, 0.6, 100, 0);
+			var forestSettings = new RForestRegressionSettings(1, 0.6, 100, 6, 0);
 //			var forestSettings = new RForestRegressionSettings(150, 0.6, 100, 0);
 			var forestReg = new RForestRegressor(forestSettings);
 			forestReg.Train(data.Item1, data.Item2);
-			var forestReggedY = new List<double>();
-			for(int i = 0; i < Math.Min(x.Count(), 1000); i++) 
+//			var forestReggedY = new List<double>();
+////			for(int i = 0; i < Math.Min(x.Count(), 250); i++) 
 //			for(int i = 0; i < x.Count(); i++) 
-			{
-				forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
-			}
-
-			Console.WriteLine("Finished");
+//			{
+//				forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
+//			}
+//			sw.Stop();
+			Console.WriteLine(string.Format("Finished [{0}]", sw.Elapsed));
 
 
 

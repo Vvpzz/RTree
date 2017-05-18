@@ -40,9 +40,6 @@ namespace RTree
 			Points = points;
 			NVars = nVars;
 			NSample = nSample;
-
-			//			cachedAvg = double.NaN;
-			//			cachedMSE = double.NaN;
 		}
 
 		public static RData FromRawData(double[][] x, double[] y)
@@ -79,7 +76,9 @@ namespace RTree
 			return new RData(dp, NVars, n);
 		}	
 
-		public Tuple<RRegionSplit, RData>[] Partitions(RRegionSplit split)
+//		public Tuple<RRegionSplit, RData>[] Partitions(RRegionSplit split)
+//		public RData[] Partitions(LowerRegionSplit split)
+		public RData[] Partitions(RRegionSplit split)
 		{
 			var ptsIn = new List<RDataPoint>();
 			var ptsOut = new List<RDataPoint>();
@@ -90,10 +89,11 @@ namespace RTree
 				else
 					ptsOut.Add(dp);
 			}
-			var dataIn = new RData(ptsIn, NVars, ptsIn.Count);
-			var dataOut = new RData(ptsOut, NVars, NSample-ptsIn.Count);
+			var nPtsIn = ptsIn.Count;
+			var dataIn = new RData(ptsIn, NVars, nPtsIn);
+			var dataOut = new RData(ptsOut, NVars, NSample-nPtsIn);
 
-			return new Tuple<RRegionSplit, RData>[]{ Tuple.Create(split, dataIn), Tuple.Create(split.Complement(), dataOut) };
+			return new []{ dataIn, dataOut };
 		}
 
 		private double ComputeAverage()
