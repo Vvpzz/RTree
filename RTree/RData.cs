@@ -8,6 +8,7 @@ namespace RTree
 		public int NSample {get; private set;}
 		public int NVars {get; private set;}
 		public List<RDataPoint> Points { get; private set; }
+		public int OrderedBy { get; private set; }
 
 		public double Average {
 			get 
@@ -35,14 +36,28 @@ namespace RTree
 		private bool avgSet, mseSet;
 		private double cachedAvg, cachedMSE;
 
-		private RData(List<RDataPoint> points, int nVars, int nSample)
+		private RData(List<RDataPoint> points, int nVars, int nSample, int orderedBy=-1)
 		{
 			Points = points;
 			NVars = nVars;
 			NSample = nSample;
+			OrderedBy = orderedBy;
 		}
 
-		public static RData FromRawData(double[][] x, double[] y)
+		public RData(RData other)
+		{
+			Points = new List<RDataPoint>(other.Points);
+			NVars = other.NVars;
+			NSample = other.NSample;
+			OrderedBy = other.OrderedBy;
+		}
+
+		public static RData Empty(int nVars, int orderedBy=-1)
+		{
+			return new RData(new List<RDataPoint>(), nVars, 0, orderedBy);
+		}
+
+		public static RData FromRawData(double[][] x, double[] y, int orderedBy=-1)
 		{
 			var nSample = y.Length;
 			if(x.Length != nSample)
@@ -63,14 +78,42 @@ namespace RTree
 				points.Add(dp);
 			}
 
-			return new RData(points, nVars, nSample);
+			return new RData(points, nVars, nSample, orderedBy);
+		}
+
+		public void Add(RDataPoint dp, int orderedBy = -1)
+		{
+			Points.Add(dp);
+			NSample += 1;
+			avgSet = false;
+			mseSet = false;
+			if(orderedBy != OrderedBy)
+				OrderedBy = -1;
+		}
+
+		public void RemoveAt(int i)
+		{
+			Points.RemoveAt(i);
+			NSample -= 1;
+			avgSet = false;
+			mseSet = false;
+		}
+
+		public void Sort(int xIndex = 0)
+		{
+			if(OrderedBy == xIndex)
+				return;
+
+			Points.Sort(new RDataPointComparer(xIndex));
+			OrderedBy = xIndex;
 		}
 
 		public RData BootStrap(int[] sampleIndices)
 		{
 			int n = sampleIndices.Length;
 			var dp = new List<RDataPoint>(n);
-			for(int i = 0; i < n; i++) {
+			for(int i = 0; i < n; i++) 
+			{
 				dp.Add(Points[sampleIndices[i]]);
 			}
 			return new RData(dp, NVars, n);
@@ -95,6 +138,22 @@ namespace RTree
 			var dataOut = new RData(ptsOut, NVars, NSample-nPtsIn);
 
 			return new []{ dataIn, dataOut };
+		}
+
+		public void IterativePartitions(RRegionSplit lowerSplit, ref RData left, ref RData right)
+		{
+			int start = left.NSample;
+			for(int i = start; i < NSample; i++) 
+			{
+				var dp = Points[i];
+				if(lowerSplit.InDomain(dp.Xs)) 
+				{
+					left.Add(dp, lowerSplit.VarId);
+					right.RemoveAt(0);
+				} 
+				else
+					break;
+			}
 		}
 
 		private double ComputeAverage()
@@ -144,6 +203,34 @@ namespace RTree
 			NbVars = xs.Length;
 		}
 
+	}
+
+	public class RDataPointComparer : IComparer<RDataPoint>
+	{
+		readonly int xIndex;
+
+		public RDataPointComparer(int xIndex)
+		{
+			this.xIndex = xIndex;
+		}
+		
+
+		#region IComparer implementation
+		public int Compare(RDataPoint dp1, RDataPoint dp2)
+		{
+			var x1 = dp1.Xs[xIndex];
+			var x2 = dp2.Xs[xIndex];
+
+			if(x1 < x2)
+				return -1;
+			
+			if(x1 > x2)
+				return 1;
+			
+			return 0;
+		}
+		#endregion
+		
 	}
 }
 

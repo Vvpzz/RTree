@@ -41,8 +41,8 @@ namespace RTree
 			treeRegs = new List<RTreeRegressor>(settings.NbTrees);
 		}
 
-		public RForestRegressionReport Train(double[][] x, double[] y){
-
+		public RForestRegressionReport Train(double[][] x, double[] y)
+		{
 			var data = RData.FromRawData(x, y);
 			return Train(data);
 		}
@@ -61,6 +61,8 @@ namespace RTree
 				var sw = Stopwatch.StartNew();
 				var bsIndices = bs.DoSample();
 				var bsData = data.BootStrap(bsIndices);
+				//TODO : manage nD case
+				bsData.Sort(0);
 				var t = GrowTree(bsData, treeSettings);
 				trees.Add(t);
 				sw.Stop();

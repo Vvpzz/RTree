@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using System.Collections.Generic;
 
 namespace RTree
 {
@@ -69,7 +70,8 @@ namespace RTree
 			this.settings = settings;
 			Tree = null;
 		}
-			
+
+		//TODO : warning, Train assumes x is sorted (1D case). What happens in nD?
 		public RTreeRegressionReport Train(double[][] x, double[] y)
 		{
 			var data = RData.FromRawData(x, y);
@@ -118,24 +120,25 @@ namespace RTree
 
 			RData bestDataL = null, bestDataR = null;
 			RRegionSplit bestRegionSplit = null;
-//			LowerRegionSplit bestRegionSplit = null;
 			for(int i = 0; i < nSplitVars; i++) 
 			{				
 				int varId = splitVars[i];
 				var splits = data.ComputeSplitPoints(varId);
+				RData dataL = RData.Empty(data.NVars, varId);
+				RData dataR = new RData(data);
 				for (int j = 0; j < splits.Length; j++) 
 				{
-					var rSplit = new RRegionSplit(varId, splits[j], false);
-//					var rSplit = new LowerRegionSplit(varId, splits[j]);
-					var partitions = data.Partitions(rSplit);
-					var dataL = partitions[0];
-					var dataR = partitions[1];
+					var lowerSplit = new RRegionSplit(varId, splits[j], false);
+//					var partitions = data.Partitions(lowerSplit);
+//					var dataL = partitions[0];
+//					var dataR = partitions[1];
+					data.IterativePartitions(lowerSplit, ref dataL, ref dataR);
 					var mse = dataL.MSE + dataR.MSE;
 					if(mse<minMse){
 						minMse = mse;
-						bestDataL = dataL;
-						bestDataR = dataR;
-						bestRegionSplit = rSplit;
+						bestDataL = new RData(dataL);
+						bestDataR = new RData(dataR);
+						bestRegionSplit = lowerSplit;
 					}						
 				}
 			}
