@@ -15,6 +15,7 @@ namespace RTree
 
 		public RTree(RNode root)
 		{
+			//TODO : optimal allocation
 			nodes = new List<RNode>(){root};
 			treeDepth = 0;
 		}
@@ -218,7 +219,7 @@ namespace RTree
 
 			var start = leavesRg.Item1;
 			var len = leavesRg.Item2;
-			var leaves = new List<int>(len);
+			var lvs = new List<int>(len);
 			for(int i = 0; i < len; i++) 
 			{
 				var idx = start + i;
@@ -228,11 +229,11 @@ namespace RTree
 					l = GetParent(ii, out ii);
 
 				//TODO : find smthg faster
-				if(!leaves.Contains(ii))
-					leaves.Add(ii);
+				if(!lvs.Contains(ii))
+					lvs.Add(ii);
 			}
 
-			return leaves;
+			return lvs;
 		}
 
 		//probably slow
@@ -254,7 +255,8 @@ namespace RTree
 
 			int i = pos;
 			var parent = GetParent(i, out i);
-			if(parent == null)
+			//if(parent == null)
+			if(i == 0)
 				return true;
 
 			return EvaluateFullSplitPath(parent, i, x);
@@ -273,17 +275,20 @@ namespace RTree
 			throw new ArgumentOutOfRangeException("x", "No region for this x ?!");
 		}
 
-		public RTree Clone(){
+		public RTree Clone()
+		{
 			return new RTree(nodes);
 		}
 
-		public RTree SubTree(RNode node){
+		public RTree SubTree(RNode node)
+		{
 			var sub = new RTree(node);
 			sub.RecursivePickChildrenFrom(this, node, nodes.IndexOf(node));
 			return sub;
 		}
 
-		public void RecursivePickChildrenFrom(RTree source, RNode node, int sourcePos){
+		public void RecursivePickChildrenFrom(RTree source, RNode node, int sourcePos)
+		{
 			if(node == null) return;
 
 			var kids = source.GetChildren(node);
@@ -356,7 +361,8 @@ namespace RTree
 
 		}
 
-		public RTree CCPrune(double pruningWeight, out double mse){
+		public RTree CCPrune(double pruningWeight, out double mse)
+		{
 			double bestMse = double.PositiveInfinity;
 			RTree bestTree = null;
 			for(int i = 0; i < nodes.Count; i++) {
@@ -374,7 +380,8 @@ namespace RTree
 			return bestTree;
 		}
 
-		private double CostComplexityCriterion(double pruningWeight){
+		private double CostComplexityCriterion(double pruningWeight)
+		{
 			var lvs = GetLeaves();
 			var nLeaves = lvs.Count;
 			double cc = pruningWeight * nLeaves;
@@ -386,7 +393,8 @@ namespace RTree
 		}
 
 
-		public double MSE(){
+		public double MSE()
+		{
 			var lvs = GetLeaves();
 			var nLeaves = lvs.Count;
 			double mse = 0.0;
@@ -397,7 +405,8 @@ namespace RTree
 			return mse;
 		}
 
-		public RTree WLPrune(out double mse){
+		public RTree WLPrune(out double mse)
+		{
 			throw new NotImplementedException();
 		}
 

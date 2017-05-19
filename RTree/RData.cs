@@ -52,7 +52,7 @@ namespace RTree
 				throw new ArgumentException("Inconsistent x sample size!");
 			int nVars = x[0].Length;
 
-			var points = new List<RDataPoint>();
+			var points = new List<RDataPoint>(nSample);
 			for(int i = 0; i < nSample; i++) {
 
 				var dataX = new double[nVars];
@@ -80,11 +80,12 @@ namespace RTree
 //		public RData[] Partitions(LowerRegionSplit split)
 		public RData[] Partitions(RRegionSplit split)
 		{
-			var ptsIn = new List<RDataPoint>();
-			var ptsOut = new List<RDataPoint>();
-			for(int i = 0; i < NSample; i++) {
+			var ptsIn = new List<RDataPoint>(NSample);
+			var ptsOut = new List<RDataPoint>(NSample);
+			for(int i = 0; i < NSample; i++) 
+			{
 				var dp = Points[i];
-				if(dp.InRegion(split))
+				if(split.InDomain(dp.Xs))
 					ptsIn.Add(dp);
 				else
 					ptsOut.Add(dp);
@@ -99,7 +100,8 @@ namespace RTree
 		private double ComputeAverage()
 		{
 			var sum = 0.0;
-			for(int i = 0; i < NSample; i++) {
+			for(int i = 0; i < NSample; i++) 
+			{
 				sum += Points[i].Y;
 			}
 			return sum / NSample;
@@ -109,7 +111,8 @@ namespace RTree
 		{
 			var avg = ComputeAverage();
 			var mse = 0.0;
-			for(int i = 0; i < NSample; i++) {
+			for(int i = 0; i < NSample; i++) 
+			{
 				var tmp = (Points[i].Y - avg);
 				mse += tmp * tmp;
 			}
@@ -140,13 +143,6 @@ namespace RTree
 			Y = y;
 			NbVars = xs.Length;
 		}
-
-
-		public bool InRegion(RRegionSplit split)
-		{
-			return split.InDomain(Xs);
-		}
-
 
 	}
 }
