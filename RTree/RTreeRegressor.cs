@@ -129,9 +129,6 @@ namespace RTree
 				for (int j = 0; j < splits.Length; j++) 
 				{
 					var lowerSplit = new RRegionSplit(varId, splits[j], false);
-//					var partitions = data.Partitions(lowerSplit);
-//					var dataL = partitions[0];
-//					var dataR = partitions[1];
 					data.IterativePartitions(lowerSplit, ref dataL, ref dataR);
 					var mse = dataL.MSE + dataR.MSE;
 					if(mse<minMse){
