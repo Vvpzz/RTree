@@ -26,30 +26,44 @@ namespace RTree
 			{
 				if(!mseSet) 
 				{
-					cachedMSE = ComputeMSE();
+					cachedMse = ComputeMSE();
 					mseSet = true;
 				}
-				return cachedMSE;
+				return cachedMse;
 			} 
 		}
 
-		private bool avgSet, mseSet;
-		private double cachedAvg, cachedMSE;
+		private bool CacheSet{ get { return avgSet && mseSet; } }
 
-		private RData(List<RDataPoint> points, int nVars, int nSample, int orderedBy=-1)
+		private bool avgSet, mseSet;
+		private double cachedAvg, cachedMse;
+
+		private RData(List<RDataPoint> points, int nVars, int nSample, int orderedBy=-1, bool forcePrecompute=false)
 		{
 			Points = points;
 			NVars = nVars;
 			NSample = nSample;
 			OrderedBy = orderedBy;
+			if(forcePrecompute)
+			{
+				//force computation of Average and MSE
+				var tmpAvg = Average;
+				var tmpMse = MSE;
+			}				
 		}
 
-		public RData(RData other)
+		public RData(RData other):this(new List<RDataPoint>(other.Points), other.NVars, other.NSample, other.OrderedBy)
 		{
-			Points = new List<RDataPoint>(other.Points);
-			NVars = other.NVars;
-			NSample = other.NSample;
-			OrderedBy = other.OrderedBy;
+			if(other.avgSet) 
+			{
+				cachedAvg = other.cachedAvg;
+				avgSet = true;
+			}
+			if(other.mseSet) 
+			{
+				cachedMse = other.cachedMse;
+				mseSet = true;
+			}
 		}
 
 		public static RData Empty(int nVars, int orderedBy=-1)
@@ -68,35 +82,38 @@ namespace RTree
 			int nVars = x[0].Length;
 
 			var points = new List<RDataPoint>(nSample);
-			for(int i = 0; i < nSample; i++) {
-
+			for(int i = 0; i < nSample; i++) 
+			{
 				var dataX = new double[nVars];
-				for (int j = 0; j < nVars; j++) {
+				for (int j = 0; j < nVars; j++) 
+				{
 					dataX[j] = x[i][j];
 				}
 				var dp = new RDataPoint(dataX, y[i]);
 				points.Add(dp);
 			}
 
-			return new RData(points, nVars, nSample, orderedBy);
+			return new RData(points, nVars, nSample, orderedBy, true);
 		}
 
 		public void Add(RDataPoint dp, int orderedBy = -1)
 		{
 			Points.Add(dp);
 			NSample += 1;
-			avgSet = false;
-			mseSet = false;
 			if(orderedBy != OrderedBy)
 				OrderedBy = -1;
+
+			UpdateAverageAndMSE(dp, true);
 		}
 
 		public void RemoveAt(int i)
 		{
+			var dp = Points[i];
+
 			Points.RemoveAt(i);
 			NSample -= 1;
-			avgSet = false;
-			mseSet = false;
+
+			UpdateAverageAndMSE(dp, false);
 		}
 
 		public void Sort(int xIndex = 0)
@@ -119,26 +136,24 @@ namespace RTree
 			return new RData(dp, NVars, n);
 		}	
 
-//		public Tuple<RRegionSplit, RData>[] Partitions(RRegionSplit split)
-//		public RData[] Partitions(LowerRegionSplit split)
-		public RData[] Partitions(RRegionSplit split)
-		{
-			var ptsIn = new List<RDataPoint>(NSample);
-			var ptsOut = new List<RDataPoint>(NSample);
-			for(int i = 0; i < NSample; i++) 
-			{
-				var dp = Points[i];
-				if(split.InDomain(dp.Xs))
-					ptsIn.Add(dp);
-				else
-					ptsOut.Add(dp);
-			}
-			var nPtsIn = ptsIn.Count;
-			var dataIn = new RData(ptsIn, NVars, nPtsIn);
-			var dataOut = new RData(ptsOut, NVars, NSample-nPtsIn);
-
-			return new []{ dataIn, dataOut };
-		}
+//		public RData[] Partitions(RRegionSplit split)
+//		{
+//			var ptsIn = new List<RDataPoint>(NSample);
+//			var ptsOut = new List<RDataPoint>(NSample);
+//			for(int i = 0; i < NSample; i++) 
+//			{
+//				var dp = Points[i];
+//				if(split.InDomain(dp.Xs))
+//					ptsIn.Add(dp);
+//				else
+//					ptsOut.Add(dp);
+//			}
+//			var nPtsIn = ptsIn.Count;
+//			var dataIn = new RData(ptsIn, NVars, nPtsIn);
+//			var dataOut = new RData(ptsOut, NVars, NSample-nPtsIn);
+//
+//			return new []{ dataIn, dataOut };
+//		}
 
 		public void IterativePartitions(RRegionSplit lowerSplit, ref RData left, ref RData right)
 		{
@@ -159,6 +174,10 @@ namespace RTree
 		private double ComputeAverage()
 		{
 			var sum = 0.0;
+
+			if(NSample <= 0)
+				return sum;
+
 			for(int i = 0; i < NSample; i++) 
 			{
 				sum += Points[i].Y;
@@ -168,7 +187,7 @@ namespace RTree
 
 		private double ComputeMSE()
 		{
-			var avg = ComputeAverage();
+			var avg = Average;
 			var mse = 0.0;
 			for(int i = 0; i < NSample; i++) 
 			{
@@ -178,12 +197,79 @@ namespace RTree
 			return mse;
 		}
 
+		private void UpdateAverageAndMSE(RDataPoint dp, bool added)
+		{
+
+
+			if(added) 
+			{
+				double delta = dp.Y - cachedAvg;
+				cachedAvg += delta / NSample;
+				double delta2 = dp.Y - cachedAvg;//cachedAvg has changed compared to delta :)
+				cachedMse += delta * delta2;
+			}
+			else
+			{
+				if(NSample == 0)
+				{
+					cachedAvg = 0;
+					cachedMse = 0;
+					return;
+				}
+					
+				double delta = cachedAvg - dp.Y;
+				cachedAvg += delta / NSample;
+				double delta2 = dp.Y - cachedAvg;
+				cachedMse += delta * delta2;
+			}
+		}
+
+//		private void UpdateAverage(RDataPoint dp, bool added)
+//		{
+//			if(!avgSet)
+//			{
+//				cachedAvg = Average;
+//				return;
+//			}
+//			
+//			if(added)
+//			{
+//				cachedAvg = (cachedAvg * (NSample - 1) + dp.Y) / NSample;
+//			}
+//			else
+//			{
+//				cachedAvg = (cachedAvg * (NSample + 1) - dp.Y) / NSample;
+//			}
+//		}
+//
+//		private void UpdateMse(RDataPoint dp, bool added)
+//		{
+//			//TODO : see if one can do better
+//			cachedMse = MSE;
+//
+//
+////			if(!mseSet)
+////			{
+////				MSE;
+////				return;
+////			}
+////
+////			if(added)
+////			{
+////				cachedMse = (cachedMse + dp.Y) / NSample;
+////			}
+////			else
+////			{
+////
+////			}
+//		}
+
 		public double[] ComputeSplitPoints(int varId)
 		{
 			var splits = new double[NSample - 1];
 			for(int i = 0; i < NSample-1; i++) 
 			{
-				splits[i] = 0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);
+				splits[i] = 0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);//Points[i].Xs[varId];
 			}
 			return splits;
 		}

@@ -78,8 +78,8 @@ namespace RTree
 //			var xy = x.Zip(y, (a,b)=>a+";"+b);
 //			var z = string.Join("\r\n", xy);
 //
-//			var settingsWoPruning = new RTreeRegressionSettings(5, PruningType.None, 0.1);
-//			var settings = new RTreeRegressionSettings(10, PruningType.CostComplexity, 0.1);
+//			var settingsWoPruning = new RTreeRegressionSettings(5, 1000, PruningType.None, 0.1);
+//			var settings = new RTreeRegressionSettings(10, 1000, PruningType.CostComplexity, 0.1);
 //
 //			var regWoPruning = new RTreeRegressor(settingsWoPruning);
 //			var reportWoPruning = regWoPruning.Train(data.Item1, data.Item2);
@@ -100,7 +100,7 @@ namespace RTree
 //			}
 //
 //			//TODO : test split variable
-//			var forestSettings = new RForestRegressionSettings(10, 0.6, 5, 0);
+//			var forestSettings = new RForestRegressionSettings(10, 0.6, 5, 10000, 0);
 //			var forestReg = new RForestRegressor(forestSettings);
 //			forestReg.Train(data.Item1, data.Item2);
 //			var forestReggedY = new List<double>();

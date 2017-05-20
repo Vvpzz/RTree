@@ -15,7 +15,7 @@ namespace RTree
 
 		public RTree(RNode root)
 		{
-			//TODO : optimal allocation
+			//TODO : optimal allocation as a function of max depth
 			nodes = new List<RNode>(){root};
 			treeDepth = 0;
 		}

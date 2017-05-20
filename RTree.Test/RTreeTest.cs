@@ -29,6 +29,38 @@ namespace RTree.Test
 		}
 
 		[Test()]
+		public void RDataTest()
+		{
+			const double tol = 1e-10;
+			var d = RData.Empty(1, 0);
+			var dp1 = new RDataPoint(new[]{ 1.0 }, 1.0);
+			var dp2 = new RDataPoint(new[]{ 2.0 }, 2.0);
+			var dp3 = new RDataPoint(new[]{ 3.0 }, 3.0);
+			var dp4 = new RDataPoint(new[]{ 4.0 }, 4.0);
+			d.Add(dp1, 0);
+			Assert.AreEqual(1, d.Average);
+			Assert.AreEqual(0, d.MSE);
+			d.Add(dp2, 0);
+			Assert.AreEqual(1.5, d.Average);
+			Assert.AreEqual(0.5, d.MSE);
+			d.RemoveAt(1);
+			Assert.AreEqual(1, d.Average);
+			Assert.AreEqual(0, d.MSE);
+			d.Add(dp2, 0);
+			Assert.AreEqual(1.5, d.Average);
+			Assert.AreEqual(0.5, d.MSE);
+			d.Add(dp3, 0);
+			Assert.AreEqual(2, d.Average);
+			Assert.AreEqual(2, d.MSE);
+			d.Add(dp4, 0);
+			Assert.AreEqual(2.5, d.Average);
+			Assert.AreEqual(5, d.MSE);
+			d.RemoveAt(2);
+			Assert.AreEqual(2.3333333333, d.Average, tol);
+			Assert.AreEqual(4.6666666667, d.MSE, tol);
+		}
+
+		[Test()]
 		public void TestAllRegressors()
 		{
 

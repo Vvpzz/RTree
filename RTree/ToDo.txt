@@ -2,5 +2,5 @@
 -[DONE] Cache leaves position in tree evaluation
 -Clean & rewrite tree interface
 -n-dimensionnal case, with n>1
--Optimize data partitionning when building tree : idea! try to allocate the right size for list, so as to avoid costly dynamic realloc 
+-[Done] Optimize data partitionning when building tree
 -Make clear that the algo awaits data sorted according to the current regression variable
