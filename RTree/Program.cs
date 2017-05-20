@@ -39,8 +39,8 @@ namespace RTree
 
 
 			var test = new RTreeTestData();
-			var data = test.Build1DTestData(15000);
-//			var data = test.Build1DTestData(30000);
+//			var data = test.Build1DTestData(15000);
+			var data = test.Build1DTestData(30000);
 			var x = data.Item1.Select(xx => xx[0]).ToArray();
 			var y = data.Item2;
 			var xy = x.Zip(y, (a,b)=>a+";"+b);

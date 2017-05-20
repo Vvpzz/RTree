@@ -269,7 +269,7 @@ namespace RTree
 			var splits = new double[NSample - 1];
 			for(int i = 0; i < NSample-1; i++) 
 			{
-				splits[i] = 0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);//Points[i].Xs[varId];
+				splits[i] = Points[i].Xs[varId];//0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);
 			}
 			return splits;
 		}

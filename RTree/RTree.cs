@@ -83,7 +83,7 @@ namespace RTree
 			return parentPos < 0 ? null : nodes[parentPos];
 		}
 
-		private int ParentIndex(int childIndex)
+		private static int ParentIndex(int childIndex)
 		{
 			if(childIndex>0)
 				return (childIndex - 1) / 2;
@@ -96,6 +96,13 @@ namespace RTree
 			return 2 * parentIndex + 1;
 		}
 
+		private static int NodeSizeFromMaxDepth(int maxDepth)
+		{
+			if(maxDepth == 0)
+				return 1;
+
+			return (int)Math.Pow(2.0, maxDepth) - 1;
+		}
 
 		public static int DepthAtPos(int pos)
 		{
@@ -283,21 +290,37 @@ namespace RTree
 		public RTree SubTree(RNode node)
 		{
 			var sub = new RTree(node);
-			sub.RecursivePickChildrenFrom(this, node, nodes.IndexOf(node));
+			sub.RecursivePickChildrenFrom(this, node, nodes.IndexOf(node), 0);
 			return sub;
 		}
 
-		public void RecursivePickChildrenFrom(RTree source, RNode node, int sourcePos)
+//		public void RecursivePickChildrenFrom(RTree source, RNode node, int sourcePos)
+//		{
+//			if(node == null) return;
+//
+//			var kids = source.GetChildren(node);
+//			if(kids == null)
+//				return;
+//			int lChildPos;
+//			AddChildNodes(node, kids.Item1, kids.Item2, out lChildPos);
+//			RecursivePickChildrenFrom(source, kids.Item1, lChildPos);
+//			RecursivePickChildrenFrom(source, kids.Item2, lChildPos + 1);
+//		}
+
+		public void RecursivePickChildrenFrom(RTree source, RNode node, int fromPos, int toPos)
 		{
 			if(node == null) return;
 
-			var kids = source.GetChildren(node);
+//			var kids = source.GetChildren(node);
+			int lChildFromPos;
+			var kids = source.GetChildren(fromPos, out lChildFromPos);
 			if(kids == null)
 				return;
-			int lChildPos;
-			AddChildNodes(node, kids.Item1, kids.Item2, out lChildPos);
-			RecursivePickChildrenFrom(source, kids.Item1, lChildPos);
-			RecursivePickChildrenFrom(source, kids.Item2, lChildPos + 1);
+			int lChildToPos;
+//			AddChildNodes(node, kids.Item1, kids.Item2, out lChildPos);
+			AddChildNodes(toPos, kids.Item1, kids.Item2, out lChildToPos);
+			RecursivePickChildrenFrom(source, kids.Item1, lChildFromPos, lChildToPos);
+			RecursivePickChildrenFrom(source, kids.Item2, lChildFromPos + 1, lChildToPos + 1);
 		}
 			
 		public RTree Prune(RNode n, bool nodeIncluded)
