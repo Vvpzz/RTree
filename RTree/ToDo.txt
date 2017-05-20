@@ -5,4 +5,7 @@
 -[Done] Optimize data partitionning when building tree
 -Make clear that the algo awaits data sorted according to the current regression variable
 -Find more efficient mgt of buckets with same points? side effect : partitions with 0 points
--enlever les dernières récups de node par node plutôt qu'indice
+-Force max depth spec in tree to avoid costly resize?
+-Remove Linq.Contains in GetLeaves & cache leaves (not critical, most of the job already done)
+
+

@@ -29,16 +29,15 @@ namespace RTree
 		private RTree(List<RNode> nodes)
 		{
 			this.nodes = new List<RNode>(nodes);
-			this.treeDepth = TreeDepth();		
+			treeDepth = TreeDepth();		
 		}
 
-		public Tuple<RNode, RNode> GetChildren(RNode n)
+		//really useful?
+		public int NodePosition(RNode n)
 		{
-			int i = nodes.IndexOf(n);
-			int lChildPos;
-			return GetChildren(i, out lChildPos);
+			return nodes.IndexOf(n);
 		}
-
+			
 		public Tuple<RNode, RNode> GetChildren(int pos, out int leftChildPos)
 		{
 			leftChildPos = ChildIndex(pos);
@@ -48,12 +47,11 @@ namespace RTree
 				leftChildPos = -1;
 				return null;
 			}
-
 			
 			return Tuple.Create(nodes[leftChildPos], nodes[leftChildPos + 1]);
 		}
 
-		//TODO : find smthg faster
+		//slow, but only used for reporting purpose
 		public int NbNodes
 		{
 			get{ return nodes.Count(n => n != null); }
@@ -68,14 +66,7 @@ namespace RTree
 		{
 			return nodes[0];
 		}
-
-
-		public RNode GetParent(RNode n, out int parentPos)
-		{
-			int i = nodes.IndexOf(n);
-			return GetParent(i, out parentPos);
-		}
-
+			
 		public RNode GetParent(int pos, out int parentPos)
 		{
 			parentPos = ParentIndex(pos);
@@ -159,14 +150,7 @@ namespace RTree
 			nodes.AddRange(new RNode[size - nodes.Count]);
 			treeDepth = TreeDepth();
 		}
-
-		public void AddChildNodes(RNode n, RNode leftChild, RNode rightChild, out int leftChildPos)
-		{
-			int i = nodes.IndexOf(n);
-			AddChildNodes(i, leftChild, rightChild, out leftChildPos);
-		}
-
-
+			
 		public void AddChildNodes(int parentPos, RNode leftChild, RNode rightChild, out int leftChildPos)
 		{
 			leftChildPos = ChildIndex(parentPos);
@@ -199,7 +183,7 @@ namespace RTree
 
 			var start = leavesRg.Item1;
 			var len = leavesRg.Item2;
-			var leaves = new List<RNode>(len);
+			var lvs = new List<RNode>(len);
 			for(int i = 0; i < len; i++) 
 			{
 				var idx = start + i;
@@ -209,11 +193,11 @@ namespace RTree
 					l = GetParent(ii, out ii);
 
 				//TODO : find smthg faster
-				if(!leaves.Contains(l))
-					leaves.Add(l);
+				if(!lvs.Contains(l))
+					lvs.Add(l);
 			}
 
-			return leaves;
+			return lvs;
 		}
 
 		public List<int> GetLeavesPos()
@@ -247,12 +231,6 @@ namespace RTree
 		public List<RNode> GetInternalNodes()
 		{
 			return new List<RNode>(nodes.Except(GetLeaves()));
-		}
-
-		private bool EvaluateFullSplitPath(RNode n, double[] x)
-		{
-			int i = nodes.IndexOf(n);
-			return EvaluateFullSplitPath(n, i, x);
 		}
 
 		private bool EvaluateFullSplitPath(RNode n, int pos, double[] x)
@@ -294,39 +272,19 @@ namespace RTree
 			return sub;
 		}
 
-//		public void RecursivePickChildrenFrom(RTree source, RNode node, int sourcePos)
-//		{
-//			if(node == null) return;
-//
-//			var kids = source.GetChildren(node);
-//			if(kids == null)
-//				return;
-//			int lChildPos;
-//			AddChildNodes(node, kids.Item1, kids.Item2, out lChildPos);
-//			RecursivePickChildrenFrom(source, kids.Item1, lChildPos);
-//			RecursivePickChildrenFrom(source, kids.Item2, lChildPos + 1);
-//		}
-
 		public void RecursivePickChildrenFrom(RTree source, RNode node, int fromPos, int toPos)
 		{
 			if(node == null) return;
 
-//			var kids = source.GetChildren(node);
 			int lChildFromPos;
 			var kids = source.GetChildren(fromPos, out lChildFromPos);
 			if(kids == null)
 				return;
 			int lChildToPos;
-//			AddChildNodes(node, kids.Item1, kids.Item2, out lChildPos);
+
 			AddChildNodes(toPos, kids.Item1, kids.Item2, out lChildToPos);
 			RecursivePickChildrenFrom(source, kids.Item1, lChildFromPos, lChildToPos);
 			RecursivePickChildrenFrom(source, kids.Item2, lChildFromPos + 1, lChildToPos + 1);
-		}
-			
-		public RTree Prune(RNode n, bool nodeIncluded)
-		{
-			int pos = nodes.IndexOf(n);
-			return Prune(pos, nodeIncluded);
 		}
 
 		public RTree Prune(int pos, bool nodeIncluded)
@@ -336,8 +294,6 @@ namespace RTree
 			var children = t.GetChildren(pos, out leftChildPos);
 			if(children != null) 
 			{
-//				t = t.RemoveNode(children.Item1, true);
-//				t = t.RemoveNode(children.Item2, true);
 				t = t.Prune(leftChildPos, true);
 				t = t.Prune(leftChildPos + 1, true);
 			}
@@ -389,10 +345,10 @@ namespace RTree
 			double bestMse = double.PositiveInfinity;
 			RTree bestTree = null;
 			for(int i = 0; i < nodes.Count; i++) {
-				var tmpTree = Prune(nodes[i], false);
+				var tmpTree = Prune(i, false);
 				//TODO : Chop() should be part of Prune
 				tmpTree.Chop();
-				var tmpMse = tmpTree.CostComplexityCriterion(pruningWeight);//tmpTree.MSE();
+				var tmpMse = tmpTree.CostComplexityCriterion(pruningWeight);
 				if(tmpMse<bestMse)
 				{
 					bestMse = tmpMse;
@@ -433,8 +389,14 @@ namespace RTree
 			throw new NotImplementedException();
 		}
 
-		public string Print(RNode n = null, string prefix = null)
+		public string Print()
 		{
+			return Print(0, null);
+		}
+
+		private string Print(int pos, string prefix)
+		{
+			var n = nodes[pos];
 			if(n == null)
 				n = GetRoot();
 
@@ -443,14 +405,15 @@ namespace RTree
 
 			var sb = new StringBuilder(n.ToString());
 			sb.AppendLine();
-			var kids = GetChildren(n);
+			int lChildPos;
+			var kids = GetChildren(pos, out lChildPos);
 			prefix += "\t";
 			if(kids != null) 
 			{
 				if(kids.Item1 != null)
-					sb.Append(string.Format("{1}{0}", Print(kids.Item1, prefix), prefix));
+					sb.Append(string.Format("{1}{0}", Print(lChildPos, prefix), prefix));
 				if(kids.Item2 != null)
-					sb.Append(string.Format("{1}{0}", Print(kids.Item2, prefix), prefix));
+					sb.Append(string.Format("{1}{0}", Print(lChildPos + 1, prefix), prefix));
 			}
 			return sb.ToString();
 		}

@@ -146,7 +146,7 @@ namespace RTree
 			var nodeL = new RNode(bestRegionSplit, bestDataL);
 			var nodeR = new RNode(bestRegionSplit.Complement(), bestDataR);
 			int leftChildPos;
-			t.AddChildNodes(node, nodeL, nodeR, out leftChildPos);
+			t.AddChildNodes(pos, nodeL, nodeR, out leftChildPos);
 			RecursiveBuildFullTree(t, nodeL, leftChildPos);
 			RecursiveBuildFullTree(t, nodeR, leftChildPos + 1);
 		}

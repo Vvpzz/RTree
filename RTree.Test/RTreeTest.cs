@@ -143,34 +143,39 @@ namespace RTree.Test
 			}
 
 			Console.WriteLine("*** Prune nodes ***");
-			var emptyTree = tree.Prune(tree.GetRoot(), true);
+			var emptyTree = tree.Prune(0, true);
 			Console.WriteLine(emptyTree.Print());
 
-			var oneLeafLessTree = tree.Prune(tree.GetLeaves().ElementAt(0), true);
+			var oneLeafLessTree = tree.Prune(tree.NodePosition(tree.GetLeaves().ElementAt(0)), true);
 			Console.WriteLine(oneLeafLessTree.Print());
 
-			var oneHalfTree = tree.Prune(tree.GetChildren(root).Item1, true);
+			int pos;
+			var n = tree.GetChildren(0, out pos);
+			var oneHalfTree = tree.Prune(pos, true);
 			Console.WriteLine(oneHalfTree.Print());
 
-			var otherHalfTree = tree.Prune(tree.GetChildren(root).Item2, true);
+			var otherHalfTree = tree.Prune(pos + 1, true);
 			Console.WriteLine(otherHalfTree.Print());
 
-			var stillSmallerTree = otherHalfTree.Prune(otherHalfTree.GetChildren(otherHalfTree.GetChildren(root).Item1).Item1, true);
+			var firstChild = otherHalfTree.GetChildren(0, out pos);
+			var secondChild = otherHalfTree.GetChildren(pos, out pos);
+			var stillSmallerTree = otherHalfTree.Prune(pos, true);
 			Console.WriteLine(stillSmallerTree.Print());
 
 			Console.WriteLine("*** Prune nodes (start node not included) ***");
-			var oneHalfTreeNodeNotIncluded = tree.Prune(tree.GetChildren(root).Item1, false);
+			n = tree.GetChildren(0, out pos);
+			var oneHalfTreeNodeNotIncluded = tree.Prune(pos, false);
 			Console.WriteLine(oneHalfTreeNodeNotIncluded.Print());
 
-			var oneHalfTreeAgain = tree.Prune(tree.GetChildren(root).Item1, true);
+			var oneHalfTreeAgain = tree.Prune(pos, true);
 			Console.WriteLine(oneHalfTreeAgain.Print());
 
 			Console.WriteLine("*** SubTree ***");
-			var subTree = tree.SubTree(tree.GetChildren(root).Item1);
+			var subTree = tree.SubTree(tree.GetChildren(0, out pos).Item1);
 			Console.WriteLine(subTree.Print());
 
 			int pp;
-			var subTreeFromLeaves = tree.SubTree(tree.GetParent(tree.GetLeaves().ElementAt(3), out pp));
+			var subTreeFromLeaves = tree.SubTree(tree.GetParent(tree.NodePosition(tree.GetLeaves().ElementAt(3)), out pp));
 			Console.WriteLine(subTreeFromLeaves.Print());
 		}
 
@@ -183,7 +188,7 @@ namespace RTree.Test
 			var xy = x.Zip(y, (a,b)=>a+";"+b);
 
 			//TODO : test higher dimensions & split variable
-			var forestSettings = new RForestRegressionSettings(150, 0.6, 100, 10000, 0);
+			var forestSettings = new RForestRegressionSettings(2, 0.6, 100, 10, 0);
 			var forestReg = new RForestRegressor(forestSettings);
 			forestReg.Train(data.Item1, data.Item2);
 			var forestReggedY = new List<double>();
