@@ -197,8 +197,8 @@ namespace RTree.Test
 			for(int i = 0; i < leaves.Count; i++) 
 			{
 				Assert.AreEqual(expectedLeavesId[i], leaves.ElementAt(i).Id, string.Format("Leaf {0} id changed", i));
-				Assert.AreEqual(expectedLeavesSize[i], leaves.ElementAt(i).Data.NSample, string.Format("Leaf {0} nb elements changed", i));
-				Assert.AreEqual(expectedLeavesValue[i], leaves.ElementAt(i).Data.Average, 1e-3, string.Format("Leaf {0} value changed", i));
+				Assert.AreEqual(expectedLeavesSize[i], leaves.ElementAt(i).Length, string.Format("Leaf {0} nb elements changed", i));
+				Assert.AreEqual(expectedLeavesValue[i], leaves.ElementAt(i).Average, 1e-3, string.Format("Leaf {0} value changed", i));
 			}
 
 			Console.WriteLine("*** Prune nodes ***");

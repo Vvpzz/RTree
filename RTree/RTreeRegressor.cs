@@ -100,16 +100,16 @@ namespace RTree
 		{
 			var rootNode = RNode.Root(data);
 			var buildTree = new RTree(rootNode);
-			RecursiveBuildFullTree(buildTree, rootNode, 0);
+			RecursiveBuildFullTree(buildTree, rootNode, data, 0);
 
 			mse = buildTree.MSE();
 
 			return buildTree;
 		}
 
-		private void RecursiveBuildFullTree(RTree t, RNode node, int pos)
+		private void RecursiveBuildFullTree(RTree t, RNode node, RData data, int pos)
 		{
-			var data = node.Data;
+//			var data = node.Data;
 			var nodeDepth = RTree.DepthAtPos(pos);
 			if(data.NSample <= settings.MinNodeSize || nodeDepth >= settings.MaxTreeDepth)
 				return;
@@ -140,12 +140,13 @@ namespace RTree
 				}
 			}
 			//TODO : add info in report
-			var nodeL = new RNode(bestRegionSplit, bestDataL);
-			var nodeR = new RNode(bestRegionSplit.Complement(), bestDataR);
+			//TODO : check start index
+			var nodeL = new RNode(bestRegionSplit, 0, bestDataL.NSample, bestDataL.Average, bestDataL.MSE);
+			var nodeR = new RNode(bestRegionSplit.Complement(), 0, bestDataR.NSample, bestDataR.Average, bestDataR.MSE);
 			int leftChildPos;
 			t.AddChildNodes(pos, nodeL, nodeR, out leftChildPos);
-			RecursiveBuildFullTree(t, nodeL, leftChildPos);
-			RecursiveBuildFullTree(t, nodeR, leftChildPos + 1);
+			RecursiveBuildFullTree(t, nodeL, bestDataL, leftChildPos);
+			RecursiveBuildFullTree(t, nodeR, bestDataR, leftChildPos + 1);
 		}
 
 		private static int[] GetSplitVars(int nVars, int nSplitVars)

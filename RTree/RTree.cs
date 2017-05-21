@@ -255,7 +255,7 @@ namespace RTree
 				int idx = leaves[i];
 				var leaf = nodes[idx];
 				if(EvaluateFullSplitPath(leaf, idx, x))
-					return leaf.Data.Average;
+					return leaf.Average;
 			}
 			throw new ArgumentOutOfRangeException("x", "No region for this x ?!");
 		}
@@ -365,7 +365,7 @@ namespace RTree
 			var nLeaves = lvs.Count;
 			double cc = pruningWeight * nLeaves;
 			for(int i = 0; i < nLeaves; i++) {
-				cc += lvs[i].Data.MSE;
+				cc += lvs[i].MSE;
 				//TODO : break loop if cc > threshold passed as parameter (i.e. stop evaluate MSE if already too big)
 			}
 			return cc;
@@ -378,7 +378,7 @@ namespace RTree
 			var nLeaves = lvs.Count;
 			double mse = 0.0;
 			for(int i = 0; i < nLeaves; i++) {
-				mse += lvs[i].Data.MSE;
+				mse += lvs[i].MSE;
 				//TODO : break loop if cc > threshold passed as parameter (i.e. stop evaluate MSE if already too big)
 			}
 			return mse;
