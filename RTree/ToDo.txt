@@ -7,5 +7,8 @@
 -Find more efficient mgt of buckets with same points? side effect : partitions with 0 points
 -Force max depth spec in tree to avoid costly resize?
 -Remove Linq.Contains in GetLeaves & cache leaves (not critical, most of the job already done)
+-Idea : to stop copying over and over the same data in many lists, one can sort the same data vector on local regions corresponding to the data split
+	Sub TODO : 	- rewrite RData
+				- use a slimmed down version of RData in RNode
 
 

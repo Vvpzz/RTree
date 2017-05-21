@@ -27,8 +27,8 @@ namespace RTree
 	public class RNode : BaseRNode
 	{
 		public RRegionSplit NodeSplit { get; private set; }
+		//TODO : replace RData by a smaller object containing only the useful information  (NSample, Average, MSE)
 		public RData Data { get; private set; }
-//		public int Position {get; private set;}
 
 		public RNode(RRegionSplit split, RData data)
 		{

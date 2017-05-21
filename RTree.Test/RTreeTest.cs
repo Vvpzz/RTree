@@ -61,6 +61,65 @@ namespace RTree.Test
 		}
 
 		[Test()]
+		public void RDataSortBetweenTest()
+		{
+			var points = new RDataPoint[] 
+			{
+				new RDataPoint(new[]{ 1.0, 0.8 }, 1.0),
+				new RDataPoint(new[]{ 2.0, 0.6 }, 2.0),
+				new RDataPoint(new[]{ 3.0, 0.9 }, 3.0),
+				new RDataPoint(new[]{ 4.0, 0.1 }, 4.0),
+				new RDataPoint(new[]{ 5.0, 0.2 }, 5.0),
+				new RDataPoint(new[]{ 6.0, 0.5 }, 6.0),
+				new RDataPoint(new[]{ 7.0, 0.4 }, 7.0),
+				new RDataPoint(new[]{ 8.0, 0.3 }, 8.0)
+			};
+			var d = new RData(points.ToList(), 2, 0);
+
+			d.SortBetween(1, 0, 5);
+			d.SortBetween(1, 5, 3);
+			Assert.AreEqual(d.Points[0].Xs[0], 4);
+			Assert.AreEqual(d.Points[0].Xs[1], 0.1);
+			Assert.AreEqual(d.Points[1].Xs[0], 5);
+			Assert.AreEqual(d.Points[1].Xs[1], 0.2);
+			Assert.AreEqual(d.Points[2].Xs[0], 2);
+			Assert.AreEqual(d.Points[2].Xs[1], 0.6);
+			Assert.AreEqual(d.Points[3].Xs[0], 1);
+			Assert.AreEqual(d.Points[3].Xs[1], 0.8);
+			Assert.AreEqual(d.Points[4].Xs[0], 3);
+			Assert.AreEqual(d.Points[4].Xs[1], 0.9);
+			Assert.AreEqual(d.Points[5].Xs[0], 8);
+			Assert.AreEqual(d.Points[5].Xs[1], 0.3);
+			Assert.AreEqual(d.Points[6].Xs[0], 7);
+			Assert.AreEqual(d.Points[6].Xs[1], 0.4);
+			Assert.AreEqual(d.Points[7].Xs[0], 6);
+			Assert.AreEqual(d.Points[7].Xs[1], 0.5);
+
+
+			d.SortBetween(0, 0, 2);
+			d.SortBetween(0, 2, 3);
+			d.SortBetween(0, 5, 2);
+			Assert.AreEqual(d.Points[0].Xs[0], 4);
+			Assert.AreEqual(d.Points[0].Xs[1], 0.1);
+			Assert.AreEqual(d.Points[1].Xs[0], 5);
+			Assert.AreEqual(d.Points[1].Xs[1], 0.2);
+			Assert.AreEqual(d.Points[2].Xs[0], 1);
+			Assert.AreEqual(d.Points[2].Xs[1], 0.8);
+			Assert.AreEqual(d.Points[3].Xs[0], 2);
+			Assert.AreEqual(d.Points[3].Xs[1], 0.6);
+			Assert.AreEqual(d.Points[4].Xs[0], 3);
+			Assert.AreEqual(d.Points[4].Xs[1], 0.9);
+			Assert.AreEqual(d.Points[5].Xs[0], 7);
+			Assert.AreEqual(d.Points[5].Xs[1], 0.4);
+			Assert.AreEqual(d.Points[6].Xs[0], 8);
+			Assert.AreEqual(d.Points[6].Xs[1], 0.3);
+			Assert.AreEqual(d.Points[7].Xs[0], 6);
+			Assert.AreEqual(d.Points[7].Xs[1], 0.5);
+
+
+		}
+
+		[Test()]
 		public void TestAllRegressors()
 		{
 
