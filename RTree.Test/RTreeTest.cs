@@ -251,6 +251,90 @@ namespace RTree.Test
 			var xyf = xy.Zip(forestReggedY, (a, b) => a + ";" + b);
 
 		}
+
+		[Test()]
+		public void TestForestEvaluation()
+		{
+			double[] refValues = new double[] {
+				0.1211461703,
+				0.1314006898,
+				0.12872291,
+				0.1378334936,
+				0.1352627394,
+				0.1423049561,
+				0.1443278168,
+				0.1388164412,
+				0.1388164412,
+				0.137867436,
+				0.1483338997,
+				0.1909797281,
+				0.2126487945,
+				0.2316715111,
+				0.2358588814,
+				0.239405308,
+				0.23479131,
+				0.2334155596,
+				0.2662490828,
+				0.2911787512,
+				0.3591968655,
+				0.4618653432,
+				0.4618653432,
+				0.4618653432,
+				0.4871457261,
+				0.5431490375,
+				0.6449899862,
+				0.7066126753,
+				0.7113507352,
+				0.8251085951,
+				0.8565529704,
+				0.8693359839,
+				0.9151732749,
+				0.937368033,
+				0.9489392521,
+				0.9562703963,
+				0.9614375279,
+				0.9867738548,
+				1.0450933577,
+				1.0623219222,
+				1.0718411237,
+				1.0718411237,
+				1.0574780435,
+				1.0750955891,
+				1.0768251073,
+				1.0768251073,
+				1.0774689565,
+				1.0834017085,
+				1.0834017085,
+				1.0782784906
+			};
+
+			var newtest = new RTreeTestData();
+			var newdata = newtest.Build1DTestData();
+
+			var newx = newdata.Item1.Select(xx => xx[0]).ToArray();
+			var newy = newdata.Item2;
+			var newxy = newx.Zip(newy, (a,b)=>a+";"+b);
+			var newz = string.Join("\r\n", newxy);
+
+			var newforestSettings = new RForestRegressionSettings(20, 0.6, 5, 10000, 0);
+			var newforestReg = new RForestRegressor(newforestSettings);
+			newforestReg.Train(newdata.Item1, newdata.Item2);
+			var newforestReggedY = new List<double>();
+
+			for(int i = 0; i < newx.Count(); i++) 
+			{
+				newforestReggedY.Add(newforestReg.Evaluate(newdata.Item1[i]));
+				Assert.AreEqual(refValues[i], newforestReg.Evaluate(newdata.Item1[i]), 1e-10);
+			}
+
+			var newxyyyf = newxy.Zip(newforestReggedY, (a, b) => a + ";" + b);
+
+			var newzz = string.Join("\r\n", newxyyyf);
+			Console.WriteLine("********* New version *********");
+			Console.WriteLine("x;y;yForest");
+			Console.WriteLine(newzz);
+			Console.WriteLine("********* New version (end) *********");
+		}
 	}
 }
 

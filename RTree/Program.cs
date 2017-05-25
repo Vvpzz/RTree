@@ -188,40 +188,40 @@ namespace RTree
 
 
 
-			var useOld = true;
+//			var useOld = true;
+//
+//
+//			var test = new RTreeTestData();
+//			var data = test.Build1DTestData();
+//
+//			var x = data.Item1.Select(xx => xx[0]).ToArray();
+//			var y = data.Item2;
+//			var xy = x.Zip(y, (a,b)=>a+";"+b);
+//			var z = string.Join("\r\n", xy);
+//
+//			var forestSettings = new RForestRegressionSettings(20, 0.6, 5, 10000, 0);
+//			//			var forestSettings = new RForestRegressionSettings(10, 0.6, 5, 10000, 0);
+//			var forestReg = new RForestRegressor(forestSettings);
+//			forestReg.Train(data.Item1, data.Item2);
+//			var forestReggedY = new List<double>();
+//
+////			forestReggedY.Add(forestReg.Evaluate(new []{-1.0}));
+//
+//			for(int i = 0; i < x.Count(); i++) 
+//			{
+//				forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
+//			}
+//				
+//			var xyyyf = xy.Zip(forestReggedY, (a, b) => a + ";" + b);
+//
+//			var zz = string.Join("\r\n", xyyyf);
+//			Console.WriteLine("********* Old version *********");
+//			Console.WriteLine("x;y;yForest");
+//			Console.WriteLine(zz);
+//			Console.WriteLine("********* Old version (end) *********");
 
 
-			var test = new RTreeTestData();
-			var data = test.Build1DTestData();
-
-			var x = data.Item1.Select(xx => xx[0]).ToArray();
-			var y = data.Item2;
-			var xy = x.Zip(y, (a,b)=>a+";"+b);
-			var z = string.Join("\r\n", xy);
-
-			var forestSettings = new RForestRegressionSettings(20, 0.6, 5, 10000, 0);
-			//			var forestSettings = new RForestRegressionSettings(10, 0.6, 5, 10000, 0);
-			var forestReg = new RForestRegressor(forestSettings);
-			forestReg.Train(data.Item1, data.Item2);
-			var forestReggedY = new List<double>();
-
-//			forestReggedY.Add(forestReg.Evaluate(new []{-1.0}));
-
-			for(int i = 0; i < x.Count(); i++) 
-			{
-				forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
-			}
-				
-			var xyyyf = xy.Zip(forestReggedY, (a, b) => a + ";" + b);
-
-			var zz = string.Join("\r\n", xyyyf);
-			Console.WriteLine("********* Old version *********");
-			Console.WriteLine("x;y;yForest");
-			Console.WriteLine(zz);
-			Console.WriteLine("********* Old version (end) *********");
-
-
-			useOld = false;
+//			useOld = false;
 
 
 			var newtest = new RTreeTestData();
