@@ -13,7 +13,7 @@ namespace RTree
 		public RData2(RDataPoint[] points)
 		{
 			Points = points;
-			NVars = points.Select(p=>p.Xs.Length).Single();
+			NVars = points.Select(p=>p.Xs.Length).Distinct().Single();
 			NSample = points.Length;
 		}
 
@@ -107,31 +107,152 @@ namespace RTree
 			return mse;
 		}
 
+		public int BestSplitBetween(int varId, int start, int length, out double bestMse, out double bestAvgL, out double bestAvgR, out double bestMseL, out double bestMseR)
+		{
+			if(length < 2)
+				throw new ArgumentException("Cannot split an array smaller than 2 elements");
+
+			//init
+//			bestAvgL = double.NaN;
+//			bestAvgR = double.NaN;
+//			bestMseL = double.NaN;
+//			bestMseR = double.NaN;
+			int upper = start + length;
+			int split = start;//NextSplit(start, upper);
+
+//			double minMse = double.PositiveInfinity;
+//			int bestSplit = -1;
+			//double bestAvgL, bestAvgR, bestMseL, bestMseR;
+
+
+			double leftAvg = Points[start].Y;
+			double leftMSE = 0.0;
+
+			//TODO : Average(start, upper) & MSE(start, upper) previously computed. Get it and use online update it instead of recomputing it from scratch
+			double rightAvg = Average(start+1, length-1);
+			double rightMSE = MSE(start+1, length-1);
+
+			bestMse = leftMSE + rightMSE;
+			bestAvgL = leftAvg;
+			bestAvgR = rightAvg;
+			bestMseL = leftMSE;
+			bestMseR = rightMSE;
+			int bestSplit = start;
+
+			int splitLimit = start + length - 1;
+			int leftLen = 1;
+			int rightLen = length - 1;
+
+
+			//while(split < splitLimit) 
+			while(rightLen>1)
+			{
+				var prevSplit = split;
+				split = NextSplit(varId, split, upper);
+
+				for(int i = prevSplit; i < split; i++) 
+				{
+					//TODO					
+					leftLen += 1;
+					rightLen -= 1;
+
+					if(rightLen < 1)
+						return bestSplit;
+
+//					if(leftLen > length - 1 || rightLen < 1)
+//						throw new ArgumentException(string.Format("Wrong split: l={0}, r={1}, split = {2}, prevSplit = {3}", leftLen, rightLen, split, prevSplit));
+
+					PostAddUpdate(Points[split], ref leftAvg, ref leftMSE, leftLen);
+					PostRemoveUpdate(Points[split], ref rightAvg, ref rightMSE, rightLen);
+
+					var mse = leftMSE + rightMSE;
+					if(mse<bestMse)
+					{
+						bestMse = mse;
+						bestSplit = split;
+						bestAvgL = leftAvg;
+						bestAvgR = rightAvg;
+						bestMseL = leftMSE;
+						bestMseR = rightMSE;
+					}
+
+				}
+					
+
+			}
+			return bestSplit;
+		}
+
+		/// <summary>
+		/// Returns split in ]start, limit[
+		/// </summary>
+		/// <returns>The split.</returns>
+		/// <param name="varId">Variable identifier.</param>
+		/// <param name="start">Start.</param>
+		/// <param name="limit">Limit.</param>
+		private int NextSplit(int varId, int start, int limit)
+		{
+			int s = start + 1;
+			while(s<limit-1)
+			{
+				if(Points[s].Xs[varId] < Points[s + 1].Xs[varId])
+					return s;
+				
+				s+=1;
+			}
+			//TODO
+			return s;
+
+		}
+
 		private void UpdateAverageAndMSE(RDataPoint dp, bool added)
 		{
-			throw new NotImplementedException();
+			double cachedAvg = 0;
+			double cachedMse = 0;
 
-//			if(added) 
-//			{
-//				double delta = dp.Y - cachedAvg;
-//				cachedAvg += delta / NSample;
-//				double delta2 = dp.Y - cachedAvg;//cachedAvg has changed compared to delta :)
-//				cachedMse += delta * delta2;
-//			}
-//			else
-//			{
-//				if(NSample == 0)
-//				{
-//					cachedAvg = 0;
-//					cachedMse = 0;
-//					return;
-//				}
-//
-//				double delta = cachedAvg - dp.Y;
-//				cachedAvg += delta / NSample;
-//				double delta2 = dp.Y - cachedAvg;
-//				cachedMse += delta * delta2;
-//			}
+			if(added) 
+			{
+				double delta = dp.Y - cachedAvg;
+				cachedAvg += delta / NSample;
+				double delta2 = dp.Y - cachedAvg;//cachedAvg has changed compared to delta :)
+				cachedMse += delta * delta2;
+			}
+			else
+			{
+				if(NSample == 0)
+				{
+					cachedAvg = 0;
+					cachedMse = 0;
+					return;
+				}
+
+				double delta = cachedAvg - dp.Y;
+				cachedAvg += delta / NSample;
+				double delta2 = dp.Y - cachedAvg;
+				cachedMse += delta * delta2;
+			}
+		}
+
+		private void PostAddUpdate(RDataPoint dp, ref double avg, ref double mse, int nSample)
+		{
+			double delta = dp.Y - avg;
+			avg += delta / nSample;
+			double delta2 = dp.Y - avg;//cachedAvg has changed compared to delta :)
+			mse += delta * delta2;
+		}
+
+		private void PostRemoveUpdate(RDataPoint dp, ref double avg, ref double mse, int nSample)
+		{
+			if(nSample == 0) 
+			{
+				avg = 0;
+				mse = 0;
+				return;
+			}
+			double delta = avg - dp.Y;
+			avg += delta / nSample;
+			double delta2 = dp.Y - avg;
+			mse += delta * delta2;
 		}
 
 		public double[] ComputeSplitPoints(int varId, int start, int length)
@@ -442,6 +563,10 @@ namespace RTree
 			NbVars = xs.Length;
 		}
 
+		public override string ToString()
+		{
+			return string.Format("[RDataPoint: Xs={0}, Y={1}, NbVars={2}]", Xs, Y, NbVars);
+		}
 	}
 
 	public class RDataPointComparer : IComparer<RDataPoint>
