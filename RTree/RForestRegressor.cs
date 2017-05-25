@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace RTree
 {
@@ -35,6 +36,8 @@ namespace RTree
 		readonly List<RTreeRegressor> treeRegs;
 		RForest forest;
 
+		public RTree[] Trees { get; private set; }
+
 		public RForestRegressor(RForestRegressionSettings settings)
 		{
 			this.settings = settings;
@@ -66,14 +69,16 @@ namespace RTree
 			{
 				var sw = Stopwatch.StartNew();
 				var bsIndices = bs.DoSample();
+				//TODO : remove
+//				bsIndices = Enumerable.Range(i, (int)(dataSize * settings.SampleProportion)).ToArray();
 				var bsData = data.BootStrap(bsIndices);
 				//TODO : manage nD case
 				bsData.Sort(0);
 				var t = GrowTree(bsData, treeSettings);
 				trees.Add(t);
 				sw.Stop();
-//				Console.WriteLine(t.Print());
 				Console.WriteLine (string.Format("Build tree {0}/{1} [n={3}][d={4}][{2}]", i+1, nTrees, sw.Elapsed, t.NbNodes, t.Depth));
+				Console.WriteLine(t.Print());
 			}
 
 			forest = new RForest(trees);
@@ -95,14 +100,18 @@ namespace RTree
 			{
 				var sw = Stopwatch.StartNew();
 				var bsIndices = bs.DoSample();
+				//TODO : remove
+//				bsIndices = Enumerable.Range(i, (int)(dataSize * settings.SampleProportion)).ToArray();
 				var bsData = data.BootStrap(bsIndices);
 				var t = GrowTree2(bsData, treeSettings);
 				trees.Add(t);
 				sw.Stop();
 				Console.WriteLine (string.Format("Build tree {0}/{1} [n={3}][d={4}][{2}]", i+1, nTrees, sw.Elapsed, t.NbNodes, t.Depth));
+				Console.WriteLine(t.Print());
 			}
 
 			forest = new RForest(trees);
+			Trees = trees.ToArray();
 
 			//TODO
 			return new RForestRegressionReport();

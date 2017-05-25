@@ -107,6 +107,8 @@ namespace RTree
 			return mse;
 		}
 
+
+//		!!!!!!LE PB VIENT DU BOOTSTRAP!!!!!
 		public int BestSplitBetween(int varId, int start, int length, out double bestMse, out double bestAvgL, out double bestAvgR, out double bestMseL, out double bestMseR)
 		{
 			if(length < 2)
@@ -150,7 +152,9 @@ namespace RTree
 				var prevSplit = split;
 				split = NextSplit(varId, split, upper);
 
-				for(int i = prevSplit; i < split; i++) 
+				//changed
+//				for(int i = prevSplit; i < split; i++) 
+				for(int i = prevSplit+1; i <= split; i++) 
 				{
 					//TODO					
 					leftLen += 1;
@@ -162,21 +166,25 @@ namespace RTree
 //					if(leftLen > length - 1 || rightLen < 1)
 //						throw new ArgumentException(string.Format("Wrong split: l={0}, r={1}, split = {2}, prevSplit = {3}", leftLen, rightLen, split, prevSplit));
 
-					PostAddUpdate(Points[split], ref leftAvg, ref leftMSE, leftLen);
-					PostRemoveUpdate(Points[split], ref rightAvg, ref rightMSE, rightLen);
-
-					var mse = leftMSE + rightMSE;
-					if(mse<bestMse)
-					{
-						bestMse = mse;
-						bestSplit = split;
-						bestAvgL = leftAvg;
-						bestAvgR = rightAvg;
-						bestMseL = leftMSE;
-						bestMseR = rightMSE;
-					}
-
+					//changed
+//					PostAddUpdate(Points[split], ref leftAvg, ref leftMSE, leftLen);
+//					PostRemoveUpdate(Points[split], ref rightAvg, ref rightMSE, rightLen);
+					PostAddUpdate(Points[i], ref leftAvg, ref leftMSE, leftLen);
+					PostRemoveUpdate(Points[i], ref rightAvg, ref rightMSE, rightLen);
 				}
+
+				var mse = leftMSE + rightMSE;
+				if(mse<bestMse)
+				{
+					bestMse = mse;
+					bestSplit = split;
+					bestAvgL = leftAvg;
+					bestAvgR = rightAvg;
+					bestMseL = leftMSE;
+					bestMseR = rightMSE;
+				}
+
+//				}
 					
 
 			}
@@ -255,15 +263,16 @@ namespace RTree
 			mse += delta * delta2;
 		}
 
-		public double[] ComputeSplitPoints(int varId, int start, int length)
-		{
-			var splits = new double[length - 1];
-			for(int i = 0; i < length-1; i++) 
-			{
-				splits[i] = Points[start + i].Xs[varId];//0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);
-			}
-			return splits;
-		}
+//		public double[] ComputeSplitPoints(int varId, int start, int length)
+//		{
+//			var splits = new double[length - 1];
+//			for(int i = 0; i < length-1; i++) 
+//			{
+////				splits[i] = Points[start + i].Xs[varId];//0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);
+//				splits[i] = 0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);//Points[start + i].Xs[varId];//
+//			}
+//			return splits;
+//		}
 	}
 
 	public class RData
@@ -543,7 +552,8 @@ namespace RTree
 			var splits = new double[NSample - 1];
 			for(int i = 0; i < NSample-1; i++) 
 			{
-				splits[i] = Points[i].Xs[varId];//0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);
+//				splits[i] = Points[i].Xs[varId];//0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);
+				splits[i] = 0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);
 			}
 			return splits;
 		}
@@ -565,7 +575,7 @@ namespace RTree
 
 		public override string ToString()
 		{
-			return string.Format("[RDataPoint: Xs={0}, Y={1}, NbVars={2}]", Xs, Y, NbVars);
+			return string.Format("[RDataPoint: Xs={0}; Y={1}; NbVars={2}]", string.Join(";", Xs), Y, NbVars);
 		}
 	}
 

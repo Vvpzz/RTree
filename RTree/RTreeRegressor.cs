@@ -232,7 +232,9 @@ namespace RTree
 
 			var lengthL = bestSplit - start + 1;
 			var lengthR = length - lengthL;
-			var splitL = new RRegionSplit(bestVarId, data.Points[bestSplit].Xs[bestVarId], false);
+//			var splitL = new RRegionSplit(bestVarId, data.Points[bestSplit].Xs[bestVarId], false);
+			var mid = 0.5 * (data.Points[bestSplit].Xs[bestVarId] + data.Points[bestSplit + 1].Xs[bestVarId]);
+			var splitL = new RRegionSplit(bestVarId, mid, false);
 			var splitR = splitL.Complement();
 			var nodeL = new RNode(splitL, start, lengthL, bestAvgL, bestMseL);
 			var nodeR = new RNode(splitR, bestSplit + 1, lengthR, bestAvgR, bestMseR);
@@ -246,12 +248,14 @@ namespace RTree
 		private static int[] GetSplitVars(int nVars, int nSplitVars)
 		{
 			int[] splitVars;
-			if(nSplitVars != nVars) {
+			if(nSplitVars != nVars) 
+			{
 				var rnd = new Random(1234);
 				var bs = new BootStrap(rnd, nVars, nSplitVars);
 				splitVars = bs.DoSample();
 			}
-			else {
+			else 
+			{
 				splitVars = Enumerable.Range(0, nVars).ToArray();
 			}
 			return splitVars;
