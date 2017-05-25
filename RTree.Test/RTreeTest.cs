@@ -189,9 +189,6 @@ namespace RTree.Test
 				new RDataPoint(new[]{ 2.0 }, 4.0),
 				new RDataPoint(new[]{ 2.0 }, 5.0),
 				new RDataPoint(new[]{ 2.0 }, 6.0),
-//				new RDataPoint(new[]{ 3.0 }, 7.0),
-//				new RDataPoint(new[]{ 3.0 }, 8.0),
-//				new RDataPoint(new[]{ 3.0 }, 9.0)
 			};
 			var d = new RData2(points);
 
@@ -200,6 +197,9 @@ namespace RTree.Test
 			newforestReg.Train2(d);
 
 			Console.WriteLine(newforestReg.Tree.Print());
+
+			Assert.AreEqual(2.0, newforestReg.Tree.GetLeaves()[0].Average);
+			Assert.AreEqual(5.0, newforestReg.Tree.GetLeaves()[1].Average);
 		}
 
 		[Test()]
