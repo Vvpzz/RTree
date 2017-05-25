@@ -202,7 +202,7 @@ namespace RTree
 			var forestSettings = new RForestRegressionSettings(20, 0.6, 5, 10000, 0);
 			//			var forestSettings = new RForestRegressionSettings(10, 0.6, 5, 10000, 0);
 			var forestReg = new RForestRegressor(forestSettings);
-			forestReg.Train(data.Item1, data.Item2, useOld);
+			forestReg.Train(data.Item1, data.Item2);
 			var forestReggedY = new List<double>();
 
 //			forestReggedY.Add(forestReg.Evaluate(new []{-1.0}));
@@ -235,7 +235,7 @@ namespace RTree
 			var newforestSettings = new RForestRegressionSettings(20, 0.6, 5, 10000, 0);
 			//			var forestSettings = new RForestRegressionSettings(10, 0.6, 5, 10000, 0);
 			var newforestReg = new RForestRegressor(newforestSettings);
-			newforestReg.Train(newdata.Item1, newdata.Item2, useOld);
+			newforestReg.Train(newdata.Item1, newdata.Item2);
 			var newforestReggedY = new List<double>();
 
 //			newforestReggedY.Add(newforestReg.Evaluate(new []{-1.0}));

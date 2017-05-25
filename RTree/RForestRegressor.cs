@@ -44,50 +44,14 @@ namespace RTree
 			treeRegs = new List<RTreeRegressor>(settings.NbTrees);
 		}
 
-		public RForestRegressionReport Train(double[][] x, double[] y, bool useOld=false)
+		public RForestRegressionReport Train(double[][] x, double[] y)
 		{
-			if(useOld) 
-			{
-				var ddata = RData.FromRawData(x, y);
-				return Train(ddata);
-			}
-
-			var data = RData2.FromRawData(x, y);
+			var data = RData.FromRawData(x, y);
 			return Train2(data);
 		}
 
-		public RForestRegressionReport Train(RData data)
-		{
-			var dataSize = data.NSample;
-			var nTrees = settings.NbTrees;
-			var trees = new List<RTree>(nTrees);
-			var rand = new Random(1234);
-			var bs = new BootStrap(rand, dataSize, (int)(dataSize * settings.SampleProportion));
-			var treeSettings = new RTreeRegressionSettings(settings.MinNodeSize, settings.MaxTreeDepth, PruningType.None, double.NaN, settings.NbSplitVariables);
 
-			for(int i = 0; i < nTrees; i++) 
-			{
-				var sw = Stopwatch.StartNew();
-				var bsIndices = bs.DoSample();
-				//TODO : remove
-//				bsIndices = Enumerable.Range(i, (int)(dataSize * settings.SampleProportion)).ToArray();
-				var bsData = data.BootStrap(bsIndices);
-				//TODO : manage nD case
-				bsData.Sort(0);
-				var t = GrowTree(bsData, treeSettings);
-				trees.Add(t);
-				sw.Stop();
-				Console.WriteLine (string.Format("Build tree {0}/{1} [n={3}][d={4}][{2}]", i+1, nTrees, sw.Elapsed, t.NbNodes, t.Depth));
-				Console.WriteLine(t.Print());
-			}
-
-			forest = new RForest(trees);
-
-			//TODO
-			return new RForestRegressionReport();
-		}
-
-		public RForestRegressionReport Train2(RData2 data)
+		public RForestRegressionReport Train2(RData data)
 		{
 			var dataSize = data.NSample;
 			var nTrees = settings.NbTrees;
@@ -117,15 +81,7 @@ namespace RTree
 			return new RForestRegressionReport();
 		}
 
-		private RTree GrowTree(RData data, RTreeRegressionSettings treeSettings)
-		{
-			var treeReg = new RTreeRegressor(treeSettings);
-			double mse;
-			var report = treeReg.Train(data);
-			return treeReg.Tree;
-		}
-
-		private RTree GrowTree2(RData2 data, RTreeRegressionSettings treeSettings)
+		private RTree GrowTree2(RData data, RTreeRegressionSettings treeSettings)
 		{
 			var treeReg = new RTreeRegressor(treeSettings);
 			double mse;

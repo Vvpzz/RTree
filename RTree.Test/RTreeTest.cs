@@ -29,38 +29,6 @@ namespace RTree.Test
 		}
 
 		[Test()]
-		public void RDataTest()
-		{
-			const double tol = 1e-10;
-			var d = RData.Empty(1, 0);
-			var dp1 = new RDataPoint(new[]{ 1.0 }, 1.0);
-			var dp2 = new RDataPoint(new[]{ 2.0 }, 2.0);
-			var dp3 = new RDataPoint(new[]{ 3.0 }, 3.0);
-			var dp4 = new RDataPoint(new[]{ 4.0 }, 4.0);
-			d.Add(dp1, 0);
-			Assert.AreEqual(1, d.Average);
-			Assert.AreEqual(0, d.MSE);
-			d.Add(dp2, 0);
-			Assert.AreEqual(1.5, d.Average);
-			Assert.AreEqual(0.5, d.MSE);
-			d.RemoveAt(1);
-			Assert.AreEqual(1, d.Average);
-			Assert.AreEqual(0, d.MSE);
-			d.Add(dp2, 0);
-			Assert.AreEqual(1.5, d.Average);
-			Assert.AreEqual(0.5, d.MSE);
-			d.Add(dp3, 0);
-			Assert.AreEqual(2, d.Average);
-			Assert.AreEqual(2, d.MSE);
-			d.Add(dp4, 0);
-			Assert.AreEqual(2.5, d.Average);
-			Assert.AreEqual(5, d.MSE);
-			d.RemoveAt(2);
-			Assert.AreEqual(2.3333333333, d.Average, tol);
-			Assert.AreEqual(4.6666666667, d.MSE, tol);
-		}
-
-		[Test()]
 		public void RDataSortBetweenTest()
 		{
 			var points = new RDataPoint[] 
@@ -74,66 +42,7 @@ namespace RTree.Test
 				new RDataPoint(new[]{ 7.0, 0.4 }, 7.0),
 				new RDataPoint(new[]{ 8.0, 0.3 }, 8.0)
 			};
-			var d = new RData(points.ToList(), 2, 0);
-
-			d.SortBetween(1, 0, 5);
-			d.SortBetween(1, 5, 3);
-			Assert.AreEqual(d.Points[0].Xs[0], 4);
-			Assert.AreEqual(d.Points[0].Xs[1], 0.1);
-			Assert.AreEqual(d.Points[1].Xs[0], 5);
-			Assert.AreEqual(d.Points[1].Xs[1], 0.2);
-			Assert.AreEqual(d.Points[2].Xs[0], 2);
-			Assert.AreEqual(d.Points[2].Xs[1], 0.6);
-			Assert.AreEqual(d.Points[3].Xs[0], 1);
-			Assert.AreEqual(d.Points[3].Xs[1], 0.8);
-			Assert.AreEqual(d.Points[4].Xs[0], 3);
-			Assert.AreEqual(d.Points[4].Xs[1], 0.9);
-			Assert.AreEqual(d.Points[5].Xs[0], 8);
-			Assert.AreEqual(d.Points[5].Xs[1], 0.3);
-			Assert.AreEqual(d.Points[6].Xs[0], 7);
-			Assert.AreEqual(d.Points[6].Xs[1], 0.4);
-			Assert.AreEqual(d.Points[7].Xs[0], 6);
-			Assert.AreEqual(d.Points[7].Xs[1], 0.5);
-
-
-			d.SortBetween(0, 0, 2);
-			d.SortBetween(0, 2, 3);
-			d.SortBetween(0, 5, 2);
-			Assert.AreEqual(d.Points[0].Xs[0], 4);
-			Assert.AreEqual(d.Points[0].Xs[1], 0.1);
-			Assert.AreEqual(d.Points[1].Xs[0], 5);
-			Assert.AreEqual(d.Points[1].Xs[1], 0.2);
-			Assert.AreEqual(d.Points[2].Xs[0], 1);
-			Assert.AreEqual(d.Points[2].Xs[1], 0.8);
-			Assert.AreEqual(d.Points[3].Xs[0], 2);
-			Assert.AreEqual(d.Points[3].Xs[1], 0.6);
-			Assert.AreEqual(d.Points[4].Xs[0], 3);
-			Assert.AreEqual(d.Points[4].Xs[1], 0.9);
-			Assert.AreEqual(d.Points[5].Xs[0], 7);
-			Assert.AreEqual(d.Points[5].Xs[1], 0.4);
-			Assert.AreEqual(d.Points[6].Xs[0], 8);
-			Assert.AreEqual(d.Points[6].Xs[1], 0.3);
-			Assert.AreEqual(d.Points[7].Xs[0], 6);
-			Assert.AreEqual(d.Points[7].Xs[1], 0.5);
-
-
-		}
-
-		[Test()]
-		public void RData2SortBetweenTest()
-		{
-			var points = new RDataPoint[] 
-			{
-				new RDataPoint(new[]{ 1.0, 0.8 }, 1.0),
-				new RDataPoint(new[]{ 2.0, 0.6 }, 2.0),
-				new RDataPoint(new[]{ 3.0, 0.9 }, 3.0),
-				new RDataPoint(new[]{ 4.0, 0.1 }, 4.0),
-				new RDataPoint(new[]{ 5.0, 0.2 }, 5.0),
-				new RDataPoint(new[]{ 6.0, 0.5 }, 6.0),
-				new RDataPoint(new[]{ 7.0, 0.4 }, 7.0),
-				new RDataPoint(new[]{ 8.0, 0.3 }, 8.0)
-			};
-			var d = new RData2(points);
+			var d = new RData(points);
 
 			d.SortBetween(1, 0, 5);
 			d.SortBetween(1, 5, 3);
@@ -190,7 +99,7 @@ namespace RTree.Test
 				new RDataPoint(new[]{ 2.0 }, 5.0),
 				new RDataPoint(new[]{ 2.0 }, 6.0),
 			};
-			var d = new RData2(points);
+			var d = new RData(points);
 
 			var newforestSettings = new RTreeRegressionSettings(3, 2, PruningType.None, 0.0, 0);
 			var newforestReg = new RTreeRegressor(newforestSettings);

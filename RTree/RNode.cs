@@ -46,11 +46,6 @@ namespace RTree
 
 		public static RNode Root(RData data)
 		{
-			return new RNode(RRegionSplit.None(), 0, data.NSample, data.Average, data.MSE);
-		}
-
-		public static RNode Root(RData2 data)
-		{
 			return new RNode(RRegionSplit.None(), 0, data.NSample, data.Average(0, data.NSample), data.MSE(0, data.NSample));
 		}
 

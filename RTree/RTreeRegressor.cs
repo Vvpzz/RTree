@@ -73,33 +73,14 @@ namespace RTree
 		}
 
 		//TODO : warning, Train assumes x is sorted (1D case). What happens in nD?
-		public RTreeRegressionReport Train(double[][] x, double[] y, bool useOld = false)
+		public RTreeRegressionReport Train(double[][] x, double[] y)
 		{
-			if(useOld) 
-			{
-				var ddata = RData.FromRawData(x, y);
-				return Train(ddata);
-
-			}
-
-			var data = RData2.FromRawData(x, y);
+			var data = RData.FromRawData(x, y);
 			return Train2(data);
 		}
 
-		public RTreeRegressionReport Train(RData data)
-		{
-			double mseBeforePruning;
-			var largeTree = BuildFullTree(ref data, out mseBeforePruning);
-			double mseAfterPruning;
-			var prunedTree = PruneTree(largeTree, out mseAfterPruning);
 
-			Tree = prunedTree;
-
-			Report = new RTreeRegressionReport(mseBeforePruning, mseAfterPruning, largeTree.NbNodes, prunedTree.NbNodes);
-			return Report;
-		}
-
-		public RTreeRegressionReport Train2(RData2 data)
+		public RTreeRegressionReport Train2(RData data)
 		{
 			double mseBeforePruning;
 			var largeTree = BuildFullTree2(ref data, out mseBeforePruning);
@@ -115,20 +96,8 @@ namespace RTree
 		public double Evaluate(double[] x){
 			return Tree.Evaluate(x);
 		}
-			
 
-		private RTree BuildFullTree(ref RData data, out double mse)
-		{
-			var rootNode = RNode.Root(data);
-			var buildTree = new RTree(rootNode);
-			RecursiveBuildFullTree(buildTree, data, 0);
-
-			mse = buildTree.MSE();
-
-			return buildTree;
-		}
-
-		private RTree BuildFullTree2(ref RData2 data, out double mse)
+		private RTree BuildFullTree2(ref RData data, out double mse)
 		{
 			var rootNode = RNode.Root(data);
 			var buildTree = new RTree(rootNode);
@@ -139,50 +108,7 @@ namespace RTree
 			return buildTree;
 		}
 
-		private void RecursiveBuildFullTree(RTree t, RData data, int pos)
-		{
-//			var data = node.Data;
-			var nodeDepth = RTree.DepthAtPos(pos);
-			if(data.NSample <= settings.MinNodeSize || nodeDepth >= settings.MaxTreeDepth)
-				return;
-			var minMse = double.PositiveInfinity;
-
-			var nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
-			var splitVars = GetSplitVars(data.NVars, nSplitVars);
-
-			RData bestDataL = null, bestDataR = null;
-			RRegionSplit bestRegionSplit = null;
-			for(int i = 0; i < nSplitVars; i++) 
-			{				
-				int varId = splitVars[i];
-				var splits = data.ComputeSplitPoints(varId);
-				RData dataL = RData.Empty(data.NVars, varId);
-				RData dataR = new RData(data);
-				for (int j = 0; j < splits.Length; j++) 
-				{
-					var lowerSplit = new RRegionSplit(varId, splits[j], false);
-					data.IterativePartitions(lowerSplit, ref dataL, ref dataR);
-					var mse = dataL.MSE + dataR.MSE;
-					if(mse<minMse){
-						minMse = mse;
-						bestDataL = new RData(dataL);
-						bestDataR = new RData(dataR);
-						bestRegionSplit = lowerSplit;
-					}						
-				}
-			}
-			//TODO : add info in report
-			//TODO : check start index
-			var nodeL = new RNode(bestRegionSplit, 0, bestDataL.NSample, bestDataL.Average, bestDataL.MSE);
-			var nodeR = new RNode(bestRegionSplit.Complement(), 0, bestDataR.NSample, bestDataR.Average, bestDataR.MSE);
-			int leftChildPos;
-			t.AddChildNodes(pos, nodeL, nodeR, out leftChildPos);
-			RecursiveBuildFullTree(t, bestDataL, leftChildPos);
-			RecursiveBuildFullTree(t, bestDataR, leftChildPos + 1);
-		}
-
-
-		private void RecursiveBuildFullTree2(RTree t, RData2 data, int pos, int start, int length)
+		private void RecursiveBuildFullTree2(RTree t, RData data, int pos, int start, int length)
 		{
 			//			var data = node.Data;
 			var nodeDepth = RTree.DepthAtPos(pos);
