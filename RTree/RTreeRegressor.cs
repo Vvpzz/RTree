@@ -107,7 +107,9 @@ namespace RTree
 			nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
 			splitVars = GetSplitVars(data.NVars, nSplitVars);
 
-			RecursiveBuildFullTree(buildTree, data, 0, 0, data.Points.Length, -1);
+			//sort on first dimension
+			data.SortBetween(0, 0, data.Points.Length);
+			RecursiveBuildFullTree(buildTree, data, 0, 0, data.Points.Length, 0);
 
 			mse = buildTree.MSE();
 
@@ -123,7 +125,7 @@ namespace RTree
 			var minMse = double.PositiveInfinity;
 
 			//TODO : debug in n-dimension
-//			ReshuffleSplitVars(lastSortedVar);
+			OptimizeSplitVars(lastSortedVar);
 //			var nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
 //			var splitVars = GetSplitVars(data.NVars, nSplitVars);
 
@@ -183,9 +185,9 @@ namespace RTree
 			return splitVars;
 		}
 
-		void ReshuffleSplitVars(int lastSortedVar)
+		void OptimizeSplitVars(int lastSortedVar)
 		{
-			if(splitVars[0] == lastSortedVar || lastSortedVar<0)
+			if(splitVars[0] == lastSortedVar)
 				return;
 			
 			int i = Array.IndexOf(splitVars, lastSortedVar);

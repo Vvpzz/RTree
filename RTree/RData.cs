@@ -89,8 +89,8 @@ namespace RTree
 
 		public int BestSplitBetween(int varId, int start, int length, out double bestMse, out double bestAvgL, out double bestAvgR, out double bestMseL, out double bestMseR)
 		{
-			if(length < 2)
-				throw new ArgumentException("Cannot split an array smaller than 2 elements");
+//			if(length < 2)
+//				throw new ArgumentException("Cannot split an array smaller than 2 elements");
 
 			//init
 			int upper = start + length;
