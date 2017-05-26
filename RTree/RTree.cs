@@ -240,7 +240,6 @@ namespace RTree
 
 			int i = pos;
 			var parent = GetParent(i, out i);
-			//if(parent == null)
 			if(i == 0)
 				return true;
 
@@ -302,7 +301,7 @@ namespace RTree
 				return t;
 
 			int parentPos;
-			var rParent = t.GetParent(pos, out parentPos);
+			t.GetParent(pos, out parentPos);
 			if(parentPos < 0) //node is root node : return empty tree
 				return RTree.Empty();
 

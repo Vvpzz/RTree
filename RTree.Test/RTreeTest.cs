@@ -103,7 +103,7 @@ namespace RTree.Test
 
 			var newforestSettings = new RTreeRegressionSettings(3, 2, PruningType.None, 0.0, 0);
 			var newforestReg = new RTreeRegressor(newforestSettings);
-			newforestReg.Train2(d);
+			newforestReg.Train(d);
 
 			Console.WriteLine(newforestReg.Tree.Print());
 
@@ -121,7 +121,7 @@ namespace RTree.Test
 			var x = data.Item1.Select(xx => xx[0]).ToArray();
 			var y = data.Item2;
 			var xy = x.Zip(y, (a,b)=>a+";"+b);
-			var z = string.Join("\r\n", xy);
+//			var z = string.Join("\r\n", xy);
 
 			var settingsWoPruning = new RTreeRegressionSettings(5, 1000, PruningType.None, 0.1);
 			var settings = new RTreeRegressionSettings(10, 1000, PruningType.CostComplexity, 0.1);
@@ -201,20 +201,20 @@ namespace RTree.Test
 			Console.WriteLine(oneLeafLessTree.Print());
 
 			int pos;
-			var n = tree.GetChildren(0, out pos);
+			tree.GetChildren(0, out pos);
 			var oneHalfTree = tree.Prune(pos, true);
 			Console.WriteLine(oneHalfTree.Print());
 
 			var otherHalfTree = tree.Prune(pos + 1, true);
 			Console.WriteLine(otherHalfTree.Print());
 
-			var firstChild = otherHalfTree.GetChildren(0, out pos);
-			var secondChild = otherHalfTree.GetChildren(pos, out pos);
+			otherHalfTree.GetChildren(0, out pos);
+			otherHalfTree.GetChildren(pos, out pos);
 			var stillSmallerTree = otherHalfTree.Prune(pos, true);
 			Console.WriteLine(stillSmallerTree.Print());
 
 			Console.WriteLine("*** Prune nodes (start node not included) ***");
-			n = tree.GetChildren(0, out pos);
+			tree.GetChildren(0, out pos);
 			var oneHalfTreeNodeNotIncluded = tree.Prune(pos, false);
 			Console.WriteLine(oneHalfTreeNodeNotIncluded.Print());
 
@@ -236,7 +236,7 @@ namespace RTree.Test
 			var data = test.Build1DTestData(30000);
 			var x = data.Item1.Select(xx => xx[0]).ToArray();
 			var y = data.Item2;
-			var xy = x.Zip(y, (a,b)=>a+";"+b);
+//			var xy = x.Zip(y, (a,b)=>a+";"+b);
 
 			//TODO : test higher dimensions & split variable
 			var forestSettings = new RForestRegressionSettings(2, 0.6, 100, 10, 0);
@@ -248,14 +248,14 @@ namespace RTree.Test
 				forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
 			}
 
-			var xyf = xy.Zip(forestReggedY, (a, b) => a + ";" + b);
+//			var xyf = xy.Zip(forestReggedY, (a, b) => a + ";" + b);
 
 		}
 
 		[Test()]
 		public void TestForestEvaluation()
 		{
-			double[] refValues = new double[] {
+			double[] refValues = new [] {
 				0.1211461703,
 				0.1314006898,
 				0.12872291,
@@ -314,7 +314,7 @@ namespace RTree.Test
 			var newx = newdata.Item1.Select(xx => xx[0]).ToArray();
 			var newy = newdata.Item2;
 			var newxy = newx.Zip(newy, (a,b)=>a+";"+b);
-			var newz = string.Join("\r\n", newxy);
+//			var newz = string.Join("\r\n", newxy);
 
 			var newforestSettings = new RForestRegressionSettings(20, 0.6, 5, 10000, 0);
 			var newforestReg = new RForestRegressor(newforestSettings);

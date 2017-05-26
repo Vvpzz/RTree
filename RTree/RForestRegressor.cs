@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace RTree
 {
@@ -71,13 +70,13 @@ namespace RTree
 				trees.Add(t);
 				sw.Stop();
 				Console.WriteLine (string.Format("Build tree {0}/{1} [n={3}][d={4}][{2}]", i+1, nTrees, sw.Elapsed, t.NbNodes, t.Depth));
-				Console.WriteLine(t.Print());
+//				Console.WriteLine(t.Print());
 			}
 
 			forest = new RForest(trees);
 			Trees = trees.ToArray();
 
-			//TODO
+			//TODO 
 			return new RForestRegressionReport();
 		}
 
@@ -85,7 +84,7 @@ namespace RTree
 		{
 			var treeReg = new RTreeRegressor(treeSettings);
 			double mse;
-			var report = treeReg.Train2(data);
+			var report = treeReg.Train(data);
 			return treeReg.Tree;
 		}
 

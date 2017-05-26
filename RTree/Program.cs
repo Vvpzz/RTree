@@ -38,26 +38,26 @@ namespace RTree
 //			Console.WriteLine(zz);
 
 
-//			var test = new RTreeTestData();
-////			var data = test.Build1DTestData(15000);
-//			var data = test.Build1DTestData(30000);
-//			var x = data.Item1.Select(xx => xx[0]).ToArray();
-//			var y = data.Item2;
-//			var xy = x.Zip(y, (a,b)=>a+";"+b);
-//
-//			//TODO : test higher dimensions & split variable
-//			var forestSettings = new RForestRegressionSettings(1, 0.6, 100, 6, 0);
-////			var forestSettings = new RForestRegressionSettings(150, 0.6, 100, 0);
-//			var forestReg = new RForestRegressor(forestSettings);
-//			forestReg.Train(data.Item1, data.Item2);
-////			var forestReggedY = new List<double>();
-//////			for(int i = 0; i < Math.Min(x.Count(), 250); i++) 
-////			for(int i = 0; i < x.Count(); i++) 
-////			{
-////				forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
-////			}
-////			sw.Stop();
-//			Console.WriteLine(string.Format("Finished [{0}]", sw.Elapsed));
+			var test = new RTreeTestData();
+//			var data = test.Build1DTestData(15000);
+			var data = test.Build1DTestData(30000);
+			var x = data.Item1.Select(xx => xx[0]).ToArray();
+			var y = data.Item2;
+			var xy = x.Zip(y, (a,b)=>a+";"+b);
+
+			//TODO : test higher dimensions & split variable
+			var forestSettings = new RForestRegressionSettings(100, 0.6, 100, 6, 0);
+//			var forestSettings = new RForestRegressionSettings(150, 0.6, 100, 0);
+			var forestReg = new RForestRegressor(forestSettings);
+			forestReg.Train(data.Item1, data.Item2);
+//			var forestReggedY = new List<double>();
+////			for(int i = 0; i < Math.Min(x.Count(), 250); i++) 
+//			for(int i = 0; i < x.Count(); i++) 
+//			{
+//				forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
+//			}
+//			sw.Stop();
+			Console.WriteLine(string.Format("Finished [{0}]", sw.Elapsed));
 
 
 
@@ -224,34 +224,34 @@ namespace RTree
 //			useOld = false;
 
 
-			var newtest = new RTreeTestData();
-			var newdata = newtest.Build1DTestData();
-
-			var newx = newdata.Item1.Select(xx => xx[0]).ToArray();
-			var newy = newdata.Item2;
-			var newxy = newx.Zip(newy, (a,b)=>a+";"+b);
-			var newz = string.Join("\r\n", newxy);
-
-			var newforestSettings = new RForestRegressionSettings(20, 0.6, 5, 10000, 0);
-			//			var forestSettings = new RForestRegressionSettings(10, 0.6, 5, 10000, 0);
-			var newforestReg = new RForestRegressor(newforestSettings);
-			newforestReg.Train(newdata.Item1, newdata.Item2);
-			var newforestReggedY = new List<double>();
-
-//			newforestReggedY.Add(newforestReg.Evaluate(new []{-1.0}));
-
-			for(int i = 0; i < newx.Count(); i++) 
-			{
-				newforestReggedY.Add(newforestReg.Evaluate(newdata.Item1[i]));
-			}
-
-			var newxyyyf = newxy.Zip(newforestReggedY, (a, b) => a + ";" + b);
-
-			var newzz = string.Join("\r\n", newxyyyf);
-			Console.WriteLine("********* New version *********");
-			Console.WriteLine("x;y;yForest");
-			Console.WriteLine(newzz);
-			Console.WriteLine("********* New version (end) *********");
+//			var newtest = new RTreeTestData();
+//			var newdata = newtest.Build1DTestData();
+//
+//			var newx = newdata.Item1.Select(xx => xx[0]).ToArray();
+//			var newy = newdata.Item2;
+//			var newxy = newx.Zip(newy, (a,b)=>a+";"+b);
+//			var newz = string.Join("\r\n", newxy);
+//
+//			var newforestSettings = new RForestRegressionSettings(20, 0.6, 5, 10000, 0);
+//			//			var forestSettings = new RForestRegressionSettings(10, 0.6, 5, 10000, 0);
+//			var newforestReg = new RForestRegressor(newforestSettings);
+//			newforestReg.Train(newdata.Item1, newdata.Item2);
+//			var newforestReggedY = new List<double>();
+//
+////			newforestReggedY.Add(newforestReg.Evaluate(new []{-1.0}));
+//
+//			for(int i = 0; i < newx.Count(); i++) 
+//			{
+//				newforestReggedY.Add(newforestReg.Evaluate(newdata.Item1[i]));
+//			}
+//
+//			var newxyyyf = newxy.Zip(newforestReggedY, (a, b) => a + ";" + b);
+//
+//			var newzz = string.Join("\r\n", newxyyyf);
+//			Console.WriteLine("********* New version *********");
+//			Console.WriteLine("x;y;yForest");
+//			Console.WriteLine(newzz);
+//			Console.WriteLine("********* New version (end) *********");
 
 		}
 	}

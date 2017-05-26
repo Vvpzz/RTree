@@ -72,18 +72,17 @@ namespace RTree
 			Tree = null;
 		}
 
-		//TODO : warning, Train assumes x is sorted (1D case). What happens in nD?
 		public RTreeRegressionReport Train(double[][] x, double[] y)
 		{
 			var data = RData.FromRawData(x, y);
-			return Train2(data);
+			return Train(data);
 		}
 
 
-		public RTreeRegressionReport Train2(RData data)
+		public RTreeRegressionReport Train(RData data)
 		{
 			double mseBeforePruning;
-			var largeTree = BuildFullTree2(ref data, out mseBeforePruning);
+			var largeTree = BuildFullTree(ref data, out mseBeforePruning);
 			double mseAfterPruning;
 			var prunedTree = PruneTree(largeTree, out mseAfterPruning);
 
@@ -97,20 +96,19 @@ namespace RTree
 			return Tree.Evaluate(x);
 		}
 
-		private RTree BuildFullTree2(ref RData data, out double mse)
+		private RTree BuildFullTree(ref RData data, out double mse)
 		{
 			var rootNode = RNode.Root(data);
 			var buildTree = new RTree(rootNode);
-			RecursiveBuildFullTree2(buildTree, data, 0, 0, data.Points.Length);
+			RecursiveBuildFullTree(buildTree, data, 0, 0, data.Points.Length);
 
 			mse = buildTree.MSE();
 
 			return buildTree;
 		}
 
-		private void RecursiveBuildFullTree2(RTree t, RData data, int pos, int start, int length)
+		private void RecursiveBuildFullTree(RTree t, RData data, int pos, int start, int length)
 		{
-			//			var data = node.Data;
 			var nodeDepth = RTree.DepthAtPos(pos);
 			if(length <= settings.MinNodeSize || nodeDepth >= settings.MaxTreeDepth)
 				return;
@@ -119,8 +117,6 @@ namespace RTree
 			var nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
 			var splitVars = GetSplitVars(data.NVars, nSplitVars);
 
-//			RData bestDataL = null, bestDataR = null;
-//			RRegionSplit bestRegionSplit = null;
 			double mse, avgL, avgR, mseL, mseR;
 			int bestSplit = -1, bestVarId = -1;
 			double bestAvgL = double.NaN, bestAvgR = double.NaN, bestMseL = double.NaN, bestMseR = double.NaN;
@@ -130,15 +126,6 @@ namespace RTree
 
 				data.SortBetween(varId, start, length);
 				int split = data.BestSplitBetween(varId, start, length, out mse, out avgL, out avgR, out mseL, out mseR);
-//				var splits = data.ComputeSplitPoints(varId);
-//				RData dataL = RData.Empty(data.NVars, varId);
-//				RData dataR = new RData(data);
-//				for (int j = 0; j < splits.Length; j++) 
-//				{
-//					var lowerSplit = new RRegionSplit(varId, splits[j], false);
-//					data.IterativePartitions(lowerSplit, ref dataL, ref dataR);
-//					int split = data.BestSplitBetween(start, length, out avgL, out avgR, out mseL, out mseR);
-//					var mse = dataL.MSE + dataR.MSE;
 				if(mse<minMse)
 				{
 					minMse = mse;
@@ -149,13 +136,8 @@ namespace RTree
 					bestMseR = mseR;
 					bestVarId = varId;
 				}						
-//				}
 			}
 			//TODO : add info in report
-			//TODO : check start index
-//			var nodeL = new RNode(bestRegionSplit, 0, bestDataL.NSample, bestDataL.Average, bestDataL.MSE);
-//			var nodeR = new RNode(bestRegionSplit.Complement(), 0, bestDataR.NSample, bestDataR.Average, bestDataR.MSE);
-
 			var lengthL = bestSplit - start + 1;
 			var lengthR = length - lengthL;
 //			var splitL = new RRegionSplit(bestVarId, data.Points[bestSplit].Xs[bestVarId], false);
@@ -167,8 +149,8 @@ namespace RTree
 
 			int leftChildPos;
 			t.AddChildNodes(pos, nodeL, nodeR, out leftChildPos);
-			RecursiveBuildFullTree2(t, data, leftChildPos, start, lengthL);
-			RecursiveBuildFullTree2(t, data, leftChildPos + 1, bestSplit + 1, lengthR);
+			RecursiveBuildFullTree(t, data, leftChildPos, start, lengthL);
+			RecursiveBuildFullTree(t, data, leftChildPos + 1, bestSplit + 1, lengthR);
 		}
 
 		private static int[] GetSplitVars(int nVars, int nSplitVars)

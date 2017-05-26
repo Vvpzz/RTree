@@ -17,7 +17,7 @@ namespace RTree
 			NSample = points.Length;
 		}
 
-		public static RData FromRawData(double[][] x, double[] y, int orderedBy=-1)
+		public static RData FromRawData(double[][] x, double[] y)
 		{
 			var nSample = y.Length;
 			if(x.Length != nSample)
@@ -40,27 +40,6 @@ namespace RTree
 			}
 
 			return new RData(points);
-		}
-
-		//data in input is sorted 
-		public void IterativePartitionsInPlace(RRegionSplit lowerSplit, int start, int length)
-		{
-
-
-
-			throw new NotImplementedException();
-//			int start = left.NSample;
-//			for(int i = start; i < NSample; i++) 
-//			{
-//				var dp = Points[i];
-//				if(lowerSplit.InDomain(dp.Xs)) 
-//				{
-//					left.Add(dp, lowerSplit.VarId);
-//					right.RemoveAt(0);
-//				} 
-//				else
-//					break;
-//			}
 		}
 
 		public void SortBetween(int varIdx, int start, int length)
@@ -108,24 +87,14 @@ namespace RTree
 		}
 
 
-//		!!!!!!LE PB VIENT DU BOOTSTRAP!!!!!
 		public int BestSplitBetween(int varId, int start, int length, out double bestMse, out double bestAvgL, out double bestAvgR, out double bestMseL, out double bestMseR)
 		{
 			if(length < 2)
 				throw new ArgumentException("Cannot split an array smaller than 2 elements");
 
 			//init
-//			bestAvgL = double.NaN;
-//			bestAvgR = double.NaN;
-//			bestMseL = double.NaN;
-//			bestMseR = double.NaN;
 			int upper = start + length;
-			int split = start;//NextSplit(start, upper);
-
-//			double minMse = double.PositiveInfinity;
-//			int bestSplit = -1;
-			//double bestAvgL, bestAvgR, bestMseL, bestMseR;
-
+			int split = start;
 
 			double leftAvg = Points[start].Y;
 			double leftMSE = 0.0;
@@ -141,34 +110,22 @@ namespace RTree
 			bestMseR = rightMSE;
 			int bestSplit = start;
 
-			int splitLimit = start + length - 1;
 			int leftLen = 1;
 			int rightLen = length - 1;
 
-
-			//while(split < splitLimit) 
 			while(rightLen>1)
 			{
 				var prevSplit = split;
 				split = NextSplit(varId, split, upper);
 
-				//changed
-//				for(int i = prevSplit; i < split; i++) 
 				for(int i = prevSplit+1; i <= split; i++) 
 				{
-					//TODO					
 					leftLen += 1;
 					rightLen -= 1;
 
 					if(rightLen < 1)
 						return bestSplit;
 
-//					if(leftLen > length - 1 || rightLen < 1)
-//						throw new ArgumentException(string.Format("Wrong split: l={0}, r={1}, split = {2}, prevSplit = {3}", leftLen, rightLen, split, prevSplit));
-
-					//changed
-//					PostAddUpdate(Points[split], ref leftAvg, ref leftMSE, leftLen);
-//					PostRemoveUpdate(Points[split], ref rightAvg, ref rightMSE, rightLen);
 					PostAddUpdate(Points[i], ref leftAvg, ref leftMSE, leftLen);
 					PostRemoveUpdate(Points[i], ref rightAvg, ref rightMSE, rightLen);
 				}
@@ -183,10 +140,6 @@ namespace RTree
 					bestMseL = leftMSE;
 					bestMseR = rightMSE;
 				}
-
-//				}
-					
-
 			}
 			return bestSplit;
 		}
@@ -208,37 +161,8 @@ namespace RTree
 				
 				s+=1;
 			}
-			//TODO
 			return s;
 
-		}
-
-		private void UpdateAverageAndMSE(RDataPoint dp, bool added)
-		{
-			double cachedAvg = 0;
-			double cachedMse = 0;
-
-			if(added) 
-			{
-				double delta = dp.Y - cachedAvg;
-				cachedAvg += delta / NSample;
-				double delta2 = dp.Y - cachedAvg;//cachedAvg has changed compared to delta :)
-				cachedMse += delta * delta2;
-			}
-			else
-			{
-				if(NSample == 0)
-				{
-					cachedAvg = 0;
-					cachedMse = 0;
-					return;
-				}
-
-				double delta = cachedAvg - dp.Y;
-				cachedAvg += delta / NSample;
-				double delta2 = dp.Y - cachedAvg;
-				cachedMse += delta * delta2;
-			}
 		}
 
 		private void PostAddUpdate(RDataPoint dp, ref double avg, ref double mse, int nSample)
@@ -262,17 +186,6 @@ namespace RTree
 			double delta2 = dp.Y - avg;
 			mse += delta * delta2;
 		}
-
-//		public double[] ComputeSplitPoints(int varId, int start, int length)
-//		{
-//			var splits = new double[length - 1];
-//			for(int i = 0; i < length-1; i++) 
-//			{
-////				splits[i] = Points[start + i].Xs[varId];//0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);
-//				splits[i] = 0.5 * (Points[i].Xs[varId] + Points[i + 1].Xs[varId]);//Points[start + i].Xs[varId];//
-//			}
-//			return splits;
-//		}
 	}
 
 	public class RDataPoint
@@ -290,7 +203,7 @@ namespace RTree
 
 		public override string ToString()
 		{
-			return string.Format("[RDataPoint: Xs={0}; Y={1}; NbVars={2}]", string.Join(";", Xs), Y, NbVars);
+			return string.Format("[RDataPoint: Xs={{{0}}}; Y={1}; NbVars={2}]", string.Join(";", Xs), Y, NbVars);
 		}
 	}
 

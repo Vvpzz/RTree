@@ -6,7 +6,7 @@ namespace RTree
 	public class RForest
 	{
 		public List<RTree> Trees {get; private set;}
-		public int NbTrees {get {return Trees.Count;} }
+		public int NbTrees { get {return Trees.Count;} }
 
 		public RForest(List<RTree> trees)
 		{
