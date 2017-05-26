@@ -63,6 +63,9 @@ namespace RTree
 	{
 		readonly RTreeRegressionSettings settings;
 
+		int nSplitVars;
+		int[] splitVars;
+
 		public RTree Tree { get; private set; }
 		public RTreeRegressionReport Report { get; private set; }
 
@@ -100,22 +103,29 @@ namespace RTree
 		{
 			var rootNode = RNode.Root(data);
 			var buildTree = new RTree(rootNode);
-			RecursiveBuildFullTree(buildTree, data, 0, 0, data.Points.Length);
+
+			nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
+			splitVars = GetSplitVars(data.NVars, nSplitVars);
+
+			RecursiveBuildFullTree(buildTree, data, 0, 0, data.Points.Length, -1);
 
 			mse = buildTree.MSE();
 
 			return buildTree;
 		}
 
-		private void RecursiveBuildFullTree(RTree t, RData data, int pos, int start, int length)
+		private void RecursiveBuildFullTree(RTree t, RData data, int pos, int start, int length, int lastSortedVar)
 		{
 			var nodeDepth = RTree.DepthAtPos(pos);
 			if(length <= settings.MinNodeSize || nodeDepth >= settings.MaxTreeDepth)
 				return;
+			
 			var minMse = double.PositiveInfinity;
 
-			var nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
-			var splitVars = GetSplitVars(data.NVars, nSplitVars);
+			//TODO : debug in n-dimension
+//			ReshuffleSplitVars(lastSortedVar);
+//			var nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
+//			var splitVars = GetSplitVars(data.NVars, nSplitVars);
 
 			double mse, avgL, avgR, mseL, mseR;
 			int bestSplit = -1, bestVarId = -1;
@@ -124,7 +134,11 @@ namespace RTree
 			{				
 				int varId = splitVars[i];
 
-				data.SortBetween(varId, start, length);
+				if(varId != lastSortedVar) 
+				{
+					data.SortBetween(varId, start, length);
+					lastSortedVar = varId;
+				}
 				int split = data.BestSplitBetween(varId, start, length, out mse, out avgL, out avgR, out mseL, out mseR);
 				if(mse<minMse)
 				{
@@ -149,8 +163,8 @@ namespace RTree
 
 			int leftChildPos;
 			t.AddChildNodes(pos, nodeL, nodeR, out leftChildPos);
-			RecursiveBuildFullTree(t, data, leftChildPos, start, lengthL);
-			RecursiveBuildFullTree(t, data, leftChildPos + 1, bestSplit + 1, lengthR);
+			RecursiveBuildFullTree(t, data, leftChildPos, start, lengthL, lastSortedVar);
+			RecursiveBuildFullTree(t, data, leftChildPos + 1, bestSplit + 1, lengthR, lastSortedVar);
 		}
 
 		private static int[] GetSplitVars(int nVars, int nSplitVars)
@@ -167,6 +181,17 @@ namespace RTree
 				splitVars = Enumerable.Range(0, nVars).ToArray();
 			}
 			return splitVars;
+		}
+
+		void ReshuffleSplitVars(int lastSortedVar)
+		{
+			if(splitVars[0] == lastSortedVar || lastSortedVar<0)
+				return;
+			
+			int i = Array.IndexOf(splitVars, lastSortedVar);
+			var temp = splitVars[0];
+			splitVars[0] = lastSortedVar;
+			splitVars[i] = temp;
 		}
 			
 		private RTree PruneTree(RTree largeTree, out double mse)
