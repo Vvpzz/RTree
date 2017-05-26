@@ -87,7 +87,7 @@ namespace RTree
 		}
 
 
-		public int BestSplitBetween(int varId, int start, int length, out double bestMse, out double bestAvgL, out double bestAvgR, out double bestMseL, out double bestMseR)
+		public int BestSplitBetween(int varId, int start, int length, out double bestMse, out double bestAvgL, out double bestAvgR, out double bestMseL, out double bestMseR, double parentAvg, double parentMse)
 		{
 //			if(length < 2)
 //				throw new ArgumentException("Cannot split an array smaller than 2 elements");
@@ -96,12 +96,16 @@ namespace RTree
 			int upper = start + length;
 			int split = start;
 
+			int leftLen = 1;
+			int rightLen = length - 1;
+
 			double leftAvg = Points[start].Y;
 			double leftMSE = 0.0;
 
-			//TODO : Average(start, upper) & MSE(start, upper) previously computed. Get it and use online update it instead of recomputing it from scratch
-			double rightAvg = Average(start+1, length-1);
-			double rightMSE = MSE(start+1, length-1);
+			//Average & MSE previously computed for parent node. Here we online update them instead of recomputing them from scratch.
+			double rightAvg = parentAvg;
+			double rightMSE = parentMse;
+			PostRemoveUpdate(Points[start], ref rightAvg, ref rightMSE, rightLen);
 
 			bestMse = leftMSE + rightMSE;
 			bestAvgL = leftAvg;
@@ -109,9 +113,6 @@ namespace RTree
 			bestMseL = leftMSE;
 			bestMseR = rightMSE;
 			int bestSplit = start;
-
-			int leftLen = 1;
-			int rightLen = length - 1;
 
 			while(rightLen>1)
 			{
