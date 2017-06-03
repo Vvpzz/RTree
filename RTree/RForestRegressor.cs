@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace RTree
 {
@@ -46,11 +47,11 @@ namespace RTree
 		public RForestRegressionReport Train(double[][] x, double[] y)
 		{
 			var data = RData.FromRawData(x, y);
-			return Train2(data);
+			return Train(data);
 		}
 
 
-		public RForestRegressionReport Train2(RData data)
+		public RForestRegressionReport Train(RData data)
 		{
 			var dataSize = data.NSample;
 			var nTrees = settings.NbTrees;
@@ -63,10 +64,10 @@ namespace RTree
 			{
 				var sw = Stopwatch.StartNew();
 				var bsIndices = bs.DoSample();
-				//TODO : remove
+				//TODO : remove [breaks forest non reg tests!]
 //				bsIndices = Enumerable.Range(i, (int)(dataSize * settings.SampleProportion)).ToArray();
 				var bsData = data.BootStrap(bsIndices);
-				var t = GrowTree2(bsData, treeSettings);
+				var t = GrowTree(bsData, treeSettings);
 				trees.Add(t);
 				sw.Stop();
 				Console.WriteLine (string.Format("Build tree {0}/{1} [n={3}][d={4}][{2}]", i+1, nTrees, sw.Elapsed, t.NbNodes, t.Depth));
@@ -80,7 +81,7 @@ namespace RTree
 			return new RForestRegressionReport();
 		}
 
-		private RTree GrowTree2(RData data, RTreeRegressionSettings treeSettings)
+		private RTree GrowTree(RData data, RTreeRegressionSettings treeSettings)
 		{
 			var treeReg = new RTreeRegressor(treeSettings);
 			double mse;

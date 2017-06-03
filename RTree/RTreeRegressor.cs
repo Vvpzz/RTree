@@ -66,6 +66,8 @@ namespace RTree
 		int nSplitVars;
 		int[] splitVars;
 
+		int lastSortedVar;
+
 		public RTree Tree { get; private set; }
 		public RTreeRegressionReport Report { get; private set; }
 
@@ -109,23 +111,29 @@ namespace RTree
 
 			//sort on first dimension
 			data.SortBetween(0, 0, data.Points.Length);
-			RecursiveBuildFullTree(buildTree, data, 0, 0, data.Points.Length, 0, data.Average(0, data.Points.Length), data.MSE(0, data.Points.Length));
+			lastSortedVar = 0;
+			RecursiveBuildFullTree(buildTree, data, 0, 0, data.Points.Length, data.Average(0, data.Points.Length), data.MSE(0, data.Points.Length));
 
 			mse = buildTree.MSE();
 
 			return buildTree;
 		}
 
-		private void RecursiveBuildFullTree(RTree t, RData data, int pos, int start, int length, int lastSortedVar, double parentAvg, double parentMse)
+		private void RecursiveBuildFullTree(RTree t, RData data, int pos, int start, int length, /*int lastSortedVar, */double parentAvg, double parentMse)
 		{
 			var nodeDepth = RTree.DepthAtPos(pos);
 			if(length <= settings.MinNodeSize || nodeDepth >= settings.MaxTreeDepth)
+			{
+//				Console.WriteLine("Stop criterion satisfied.");
+//				Console.WriteLine("Node size:"+length);
+//				Console.WriteLine("Node depth:"+nodeDepth);
 				return;
+			}
 			
 			var minMse = double.PositiveInfinity;
 
 			//TODO : debug in n-dimension
-			OptimizeSplitVars(lastSortedVar);
+			OptimizeSplitVars();
 //			var nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
 //			var splitVars = GetSplitVars(data.NVars, nSplitVars);
 
@@ -136,14 +144,7 @@ namespace RTree
 			{				
 				int varId = splitVars[i];
 
-				if(varId != lastSortedVar) 
-				{
-					data.SortBetween(varId, start, length);
-					lastSortedVar = varId;
-				}
-
-//				!!!!!
-// 				TODO : test n-dimension
+				SortIfNeeded(data, start, length, varId);
 
 				int split = data.BestSplitBetween(varId, start, length, out mse, out avgL, out avgR, out mseL, out mseR, parentAvg, parentMse);
 				if(mse<minMse)
@@ -157,6 +158,12 @@ namespace RTree
 					bestVarId = varId;
 				}						
 			}
+
+//			Console.WriteLine(">>> Best split found.");
+
+			//Sort according to the best split
+			SortIfNeeded(data, start, length, bestVarId);
+
 			//TODO : add info in report
 			var lengthL = bestSplit - start + 1;
 			var lengthR = length - lengthL;
@@ -169,8 +176,30 @@ namespace RTree
 
 			int leftChildPos;
 			t.AddChildNodes(pos, nodeL, nodeR, out leftChildPos);
-			RecursiveBuildFullTree(t, data, leftChildPos, start, lengthL, lastSortedVar, bestAvgL, bestMseL);
-			RecursiveBuildFullTree(t, data, leftChildPos + 1, bestSplit + 1, lengthR, lastSortedVar, bestAvgR, bestMseR);
+//			Console.WriteLine("Added nodes " + nodeL.Id + " and " +  nodeR.Id);
+
+
+//			Console.WriteLine(t.Print());
+
+//			Console.WriteLine(">>> Build left subtree from " + t.GetNodeAtPos(leftChildPos));
+			RecursiveBuildFullTree(t, data, leftChildPos, start, lengthL, bestAvgL, bestMseL);
+
+
+
+			//Sort according to the best split
+			SortIfNeeded(data, start, length, bestVarId);
+
+//			Console.WriteLine(">>> Build right subtree from " + t.GetNodeAtPos(leftChildPos+1));
+			RecursiveBuildFullTree(t, data, leftChildPos + 1, bestSplit + 1, lengthR, bestAvgR, bestMseR);
+		}
+
+		private void SortIfNeeded(RData data, int start, int length, int varId)
+		{
+			if(varId != lastSortedVar) 
+			{
+				data.SortBetween(varId, start, length);
+				lastSortedVar = varId;
+			}
 		}
 
 		private static int[] GetSplitVars(int nVars, int nSplitVars)
@@ -189,7 +218,7 @@ namespace RTree
 			return splitVars;
 		}
 
-		void OptimizeSplitVars(int lastSortedVar)
+		void OptimizeSplitVars()
 		{
 			if(splitVars[0] == lastSortedVar)
 				return;

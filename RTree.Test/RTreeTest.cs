@@ -87,6 +87,44 @@ namespace RTree.Test
 
 		}
 
+
+//		[Test()]
+//		public void RDataSortInvarianceTest()
+//		{
+//			var points = new RDataPoint[] 
+//			{
+//				new RDataPoint(new[]{ 0.4,	0 }, 1.12761555588819),
+//				new RDataPoint(new[]{ 0.4, 0.2 }, 0.970693150910113),
+//				new RDataPoint(new[]{ 0.4, 	-0.1 }, 0.804883637720712),
+//				new RDataPoint(new[]{ 0.45, 0.15 }, 0.935915715800037),
+//				new RDataPoint(new[]{ 0.45,	0.1 }, 0.993109678409756),
+//				new RDataPoint(new[]{ 0.45,	-0.05 }, 0.785798383808597),
+//				new RDataPoint(new[]{ 0.45,	0.2 }, 0.823471073082816)
+//			};
+//
+//			var pointsRef = new RDataPoint[] 
+//			{
+//				new RDataPoint(new[]{ 0.4,	0 }, 1.12761555588819),
+//				new RDataPoint(new[]{ 0.4, 0.2 }, 0.970693150910113),
+//				new RDataPoint(new[]{ 0.4, 	-0.1 }, 0.804883637720712),
+//				new RDataPoint(new[]{ 0.45, 0.15 }, 0.935915715800037),
+//				new RDataPoint(new[]{ 0.45,	0.1 }, 0.993109678409756),
+//				new RDataPoint(new[]{ 0.45,	-0.05 }, 0.785798383808597),
+//				new RDataPoint(new[]{ 0.45,	0.2 }, 0.823471073082816)
+//			};
+//
+//			var d = new RData(points);
+//
+//			d.SortBetween(0, 0, d.NSample);
+//			d.SortBetween(1, 0, d.NSample);
+//			d.SortBetween(0, 0, d.NSample);
+//
+//			for(int i = 0; i < d.NSample; i++) 
+//			{
+//				Assert.AreEqual(pointsRef[i], d.Points[i].Y);
+//			}
+//		}
+
 		[Test()]
 		public void TestSameXs()
 		{
@@ -109,6 +147,46 @@ namespace RTree.Test
 
 			Assert.AreEqual(2.0, newforestReg.Tree.GetLeaves()[0].Average);
 			Assert.AreEqual(5.0, newforestReg.Tree.GetLeaves()[1].Average);
+		}
+
+		[Test()]
+		public void TestAvgAndMse()
+		{
+//			var points = new RDataPoint[] 
+//			{
+//				new RDataPoint(new[]{ 1.0 }, 1.0),
+//				new RDataPoint(new[]{ 1.0 }, 2.0),
+//				new RDataPoint(new[]{ 1.0 }, 3.0),
+//				new RDataPoint(new[]{ 2.0 }, 4.0),
+//				new RDataPoint(new[]{ 2.0 }, 5.0),
+//				new RDataPoint(new[]{ 2.0 }, 6.0),
+//			};
+//			var d = new RData(points);
+
+			const double tol = 1e-10;
+
+			var testData = new RTreeTestData();
+			var t = testData.Build2DTestData(20, true);
+			var d = RData.FromRawData(t.Item1, t.Item2);
+
+			d.SortBetween(1, 0, d.NSample);
+
+			var lavg = 0.0;
+			var lmse = 0.0;
+			var ravg = d.Average(0, d.NSample);
+			var rmse = d.MSE(0, d.NSample);
+			for(int i = 0; i < d.NSample; i++) 
+			{
+				var llen = i + 1;
+				d.PostAddUpdate(d.Points[i], ref lavg, ref lmse, llen);
+				Assert.AreEqual(d.Average(0, llen), lavg, tol);
+				Assert.AreEqual(d.MSE(0, llen), lmse, tol);
+
+				var rlen = d.NSample - (i+1);
+				d.PostRemoveUpdate(d.Points[i], ref ravg, ref rmse, rlen);
+				Assert.AreEqual(d.Average(i + 1, rlen), ravg, tol);
+				Assert.AreEqual(d.MSE(i + 1, rlen), rmse, tol);
+			}
 		}
 
 		[Test()]
@@ -231,7 +309,8 @@ namespace RTree.Test
 		}
 
 		[Test()]
-		public void TestForestPerformance(){
+		public void TestForestPerformance()
+		{
 			var test = new RTreeTestData();
 			var data = test.Build1DTestData(30000);
 			var x = data.Item1.Select(xx => xx[0]).ToArray();
@@ -251,6 +330,36 @@ namespace RTree.Test
 //			var xyf = xy.Zip(forestReggedY, (a, b) => a + ";" + b);
 
 		}
+
+		[TestCase(true, 2.6396765002892344E-27d)]
+		[TestCase(false, 1.7981593095030839d)]
+		public void TestForestPerformance2D(bool simple, double refMse)
+		{
+			var test = new RTreeTestData();
+			var data = test.Build2DTestData(20, simple);
+			var x0 = data.Item1.Select(xx => xx[0]).ToArray();
+			var x1 = data.Item1.Select(xx => xx[1]).ToArray();
+			var y = data.Item2;
+			//			var xy = x.Zip(y, (a,b)=>a+";"+b);
+
+			//TODO : test higher dimensions & split variable
+			var forestSettings = new RForestRegressionSettings(20, 0.6, 5, 10, 0);
+			var forestReg = new RForestRegressor(forestSettings);
+			forestReg.Train(data.Item1, data.Item2);
+			//var forestReggedY = new List<double>();
+			var mse = 0.0;
+			for(int i = 0; i < x0.Count(); i++) 
+			{
+				//forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
+				var tmp = forestReg.Evaluate(data.Item1[i]) - data.Item2[i];
+				mse += tmp * tmp;
+			}
+
+			Console.WriteLine("MSE: " + mse);
+			Assert.AreEqual(refMse, mse, 1e-15);
+			//			var xyf = xy.Zip(forestReggedY, (a, b) => a + ";" + b);
+		}
+
 
 		[Test()]
 		public void TestForestEvaluation()

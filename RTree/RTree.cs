@@ -37,7 +37,12 @@ namespace RTree
 		{
 			return nodes.IndexOf(n);
 		}
-			
+
+		public RNode GetNodeAtPos(int pos)
+		{
+			return nodes[pos];
+		}
+
 		public Tuple<RNode, RNode> GetChildren(int pos, out int leftChildPos)
 		{
 			leftChildPos = ChildIndex(pos);
