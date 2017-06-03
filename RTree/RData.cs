@@ -113,34 +113,7 @@ namespace RTree
 			double rightAvg = parentAvg;
 			double rightMSE = parentMse;
 
-//			Console.WriteLine ("********************************************************");
-//			Console.WriteLine("Split on " + varId);
-//			Console.WriteLine(string.Format("Start:{0};Length:{1};Avg:{2};MSE:{3}", start, length, parentAvg, parentMse));
-//			Console.WriteLine(string.Format("Recomputed Avg:{0}; Recomputed MSE:{1}", Average(start, length), MSE(start, length)));
-////			rightAvg = Average(start, length);
-////			rightMSE = MSE(start, length);
-//
-//			if(Math.Abs(rightAvg - Average(start, length)) > 1e-10)
-//			{
-//
-//				for (int ii = start; ii < start+length; ii++) 
-//				{
-//					Console.WriteLine(Points[ii]);
-//				}
-//
-//				throw new ArgumentException("Wrong parent avg");	
-//
-//			}
-//			if(Math.Abs(rightMSE - MSE(start, length)) > 1e-10)
-//				throw new ArgumentException("Wrong parent mse");
-
-
 			PostRemoveUpdate(Points[start], ref rightAvg, ref rightMSE, rightLen);
-
-//			if(Math.Abs(rightAvg - Average(start + 1, rightLen)) > 1e-10)
-//				throw new ArgumentException("Wrong first right avg");	
-//			if(Math.Abs(rightMSE - MSE(start + 1, rightLen)) > 1e-10)
-//				throw new ArgumentException("Wrong first right mse");
 
 			bestMse = leftMSE + rightMSE;
 			bestAvgL = leftAvg;
@@ -163,40 +136,7 @@ namespace RTree
 						return bestSplit;
 
 					PostAddUpdate(Points[i], ref leftAvg, ref leftMSE, leftLen);
-//					if(Math.Abs(leftAvg - Average(start, leftLen)) > 1e-10)
-//						throw new ArgumentException("Wrong left avg");
-//					if(Math.Abs(leftMSE - MSE(start, leftLen)) > 1e-10)
-//						throw new ArgumentException("Wrong left mse");
-//
-//					var dbg_ra = rightAvg;
-//					var dbg_rm = rightMSE;
-//					var dbg_rl = rightLen;
-
 					PostRemoveUpdate(Points[i], ref rightAvg, ref rightMSE, rightLen);
-//					if(Math.Abs(rightAvg - Average(i + 1, rightLen)) > 1e-10)
-//					{
-//						Console.WriteLine("prev rigth avg; " + dbg_ra);
-//						Console.WriteLine("prev rigth mse; " + dbg_rm);
-//						Console.WriteLine("prev rigth length; " + dbg_rl);
-//
-//						Console.WriteLine("updated rigth avg; " + rightAvg);
-//						Console.WriteLine("updated rigth mse; " + rightMSE);
-//						Console.WriteLine("updated rigth length; " + rightLen);
-//
-//						Console.WriteLine("Removed point; " + Points[i]);
-//
-//						for (int ii = i+1; ii < i+1+rightLen; ii++) {
-//							Console.WriteLine(Points[ii]);
-//						}
-//
-//						Console.WriteLine("expected avg; " + Average(i + 1, rightLen));
-//						Console.WriteLine("expected mse; " + MSE(i + 1, rightLen));
-//
-//						throw new ArgumentException("Wrong right avg");	
-//					}
-//
-//					if(Math.Abs(rightMSE - MSE(i + 1, rightLen)) > 1e-10)
-//						throw new ArgumentException("Wrong right mse");
 				}
 
 				var mse = leftMSE + rightMSE;
@@ -254,11 +194,6 @@ namespace RTree
 			avg += delta / nSample;
 			double delta2 = dp.Y - avg;
 			mse += delta * delta2;
-//			double delta = (nSample + 1) * avg - dp.Y;
-//			double deltaMse = avg - dp.Y;
-//			avg += delta / nSample;
-//			double delta2 = dp.Y - avg;
-//			mse += deltaMse * delta2;
 		}
 	}
 
@@ -309,17 +244,6 @@ namespace RTree
 			}
 
 			return 0;
-
-//			var x1 = dp1.Xs[xIndex];
-//			var x2 = dp2.Xs[xIndex];
-//
-//			if(x1 < x2)
-//				return -1;
-//			
-//			if(x1 > x2)
-//				return 1;
-//			
-//			return 0;
 		}
 		#endregion
 

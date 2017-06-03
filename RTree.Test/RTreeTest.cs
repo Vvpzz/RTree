@@ -338,7 +338,7 @@ namespace RTree.Test
 			var test = new RTreeTestData();
 			var data = test.Build2DTestData(20, simple);
 			var x0 = data.Item1.Select(xx => xx[0]).ToArray();
-			var x1 = data.Item1.Select(xx => xx[1]).ToArray();
+//			var x1 = data.Item1.Select(xx => xx[1]).ToArray();
 			var y = data.Item2;
 			//			var xy = x.Zip(y, (a,b)=>a+";"+b);
 

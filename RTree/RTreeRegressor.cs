@@ -123,12 +123,7 @@ namespace RTree
 		{
 			var nodeDepth = RTree.DepthAtPos(pos);
 			if(length <= settings.MinNodeSize || nodeDepth >= settings.MaxTreeDepth)
-			{
-//				Console.WriteLine("Stop criterion satisfied.");
-//				Console.WriteLine("Node size:"+length);
-//				Console.WriteLine("Node depth:"+nodeDepth);
 				return;
-			}
 			
 			var minMse = double.PositiveInfinity;
 
@@ -159,8 +154,6 @@ namespace RTree
 				}						
 			}
 
-//			Console.WriteLine(">>> Best split found.");
-
 			//Sort according to the best split
 			SortIfNeeded(data, start, length, bestVarId);
 
@@ -176,20 +169,11 @@ namespace RTree
 
 			int leftChildPos;
 			t.AddChildNodes(pos, nodeL, nodeR, out leftChildPos);
-//			Console.WriteLine("Added nodes " + nodeL.Id + " and " +  nodeR.Id);
-
-
-//			Console.WriteLine(t.Print());
-
-//			Console.WriteLine(">>> Build left subtree from " + t.GetNodeAtPos(leftChildPos));
 			RecursiveBuildFullTree(t, data, leftChildPos, start, lengthL, bestAvgL, bestMseL);
-
-
 
 			//Sort according to the best split
 			SortIfNeeded(data, start, length, bestVarId);
 
-//			Console.WriteLine(">>> Build right subtree from " + t.GetNodeAtPos(leftChildPos+1));
 			RecursiveBuildFullTree(t, data, leftChildPos + 1, bestSplit + 1, lengthR, bestAvgR, bestMseR);
 		}
 

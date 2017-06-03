@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace RTree
 {
@@ -33,7 +32,6 @@ namespace RTree
 	public class RForestRegressor
 	{
 		readonly RForestRegressionSettings settings;
-		readonly List<RTreeRegressor> treeRegs;
 		RForest forest;
 
 		public RTree[] Trees { get; private set; }
@@ -41,7 +39,6 @@ namespace RTree
 		public RForestRegressor(RForestRegressionSettings settings)
 		{
 			this.settings = settings;
-			treeRegs = new List<RTreeRegressor>(settings.NbTrees);
 		}
 
 		public RForestRegressionReport Train(double[][] x, double[] y)
@@ -64,14 +61,13 @@ namespace RTree
 			{
 				var sw = Stopwatch.StartNew();
 				var bsIndices = bs.DoSample();
-				//TODO : remove [breaks forest non reg tests!]
+				//TODO : add option to disable bootstrap
 //				bsIndices = Enumerable.Range(i, (int)(dataSize * settings.SampleProportion)).ToArray();
 				var bsData = data.BootStrap(bsIndices);
 				var t = GrowTree(bsData, treeSettings);
 				trees.Add(t);
 				sw.Stop();
 				Console.WriteLine (string.Format("Build tree {0}/{1} [n={3}][d={4}][{2}]", i+1, nTrees, sw.Elapsed, t.NbNodes, t.Depth));
-//				Console.WriteLine(t.Print());
 			}
 
 			forest = new RForest(trees);
@@ -84,8 +80,7 @@ namespace RTree
 		private RTree GrowTree(RData data, RTreeRegressionSettings treeSettings)
 		{
 			var treeReg = new RTreeRegressor(treeSettings);
-			double mse;
-			var report = treeReg.Train(data);
+			treeReg.Train(data);
 			return treeReg.Tree;
 		}
 

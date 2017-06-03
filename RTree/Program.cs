@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Globalization;
 
 namespace RTree
 {
@@ -43,11 +40,10 @@ namespace RTree
 			var test = new RTreeTestData();
 //			var data = test.Build1DTestData(15000);
 			var data = test.Build1DTestData(30000);
-			var x = data.Item1.Select(xx => xx[0]).ToArray();
-			var y = data.Item2;
-			var xy = x.Zip(y, (a,b)=>a+";"+b);
+//			var x = data.Item1.Select(xx => xx[0]).ToArray();
+//			var y = data.Item2;
+//			var xy = x.Zip(y, (a,b)=>a+";"+b);
 
-			//TODO : test higher dimensions & split variable
 			var forestSettings = new RForestRegressionSettings(100, 0.6, 100, 6, 0);
 //			var forestSettings = new RForestRegressionSettings(150, 0.6, 100, 0);
 			var forestReg = new RForestRegressor(forestSettings);
@@ -317,7 +313,7 @@ namespace RTree
 			var rand = new Random(1234);
 
 			for(int i = 0; i < size; i++) {
-				x[i] = new double[1]{ (10.0 * i) / size - 5 };
+				x[i] = new []{ (10.0 * i) / size - 5 };
 				y[i] = 1 / (1.0 + Math.Exp(-1.0 * x[i][0])) + 0.2*rand.NextDouble();
 			}
 
@@ -339,7 +335,7 @@ namespace RTree
 			{
 				for (int j = 0; j < sqrtSize; j++) 
 				{
-					var xx = new double[2]{ (1.0 * i) / sqrtSize - 0.5, (1.0 * j) / sqrtSize - 0.5 };
+					var xx = new []{ (1.0 * i) / sqrtSize - 0.5, (1.0 * j) / sqrtSize - 0.5 };
 					x.Add(xx);
 					y.Add(1*Gaussian2DDensity(sigma1, sigma2, rho, xx[0], xx[1]) + 0.0*rand.NextDouble());
 //					y.Add(SimpleTest(xx[0], xx[1]));
