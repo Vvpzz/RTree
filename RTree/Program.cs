@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
+using System.IO;
 
 namespace RTree
 {
@@ -37,52 +40,54 @@ namespace RTree
 //			Console.WriteLine(zz);
 
 //			1D test
-			var test = new RTreeTestData();
-//			var data = test.Build1DTestData(15000);
-			var data = test.Build1DTestData(30000);
-//			var x = data.Item1.Select(xx => xx[0]).ToArray();
-//			var y = data.Item2;
-//			var xy = x.Zip(y, (a,b)=>a+";"+b);
-
-			var forestSettings = new RForestRegressionSettings(100, 0.6, 100, 6, 0);
-//			var forestSettings = new RForestRegressionSettings(150, 0.6, 100, 0);
-			var forestReg = new RForestRegressor(forestSettings);
-			forestReg.Train(data.Item1, data.Item2);
-//			var forestReggedY = new List<double>();
-////			for(int i = 0; i < Math.Min(x.Count(), 250); i++) 
-//			for(int i = 0; i < x.Count(); i++) 
-//			{
-//				forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
-//			}
-
-
-////			2D test
-//			NumberFormatInfo nfi = new CultureInfo( "en-US", false ).NumberFormat;
 //			var test = new RTreeTestData();
-////			var data = test.Build2DTestData(5);
-//			var data = test.Build2DTestData(20);
-//			var x0 = data.Item1.Select(xx => xx[0]).ToArray();
-//			var x1 = data.Item1.Select(xx => xx[1]).ToArray();
-//			var y = data.Item2;
-//			var xy = x0.Zip(x1, (a,b)=>a.ToString(nfi)+";"+b.ToString(nfi)).Zip(y, (a,b)=>a+";"+b.ToString(nfi));
+////			var data = test.Build1DTestData(15000);
+//			var data = test.Build1DTestData(30000);
+////			var x = data.Item1.Select(xx => xx[0]).ToArray();
+////			var y = data.Item2;
+////			var xy = x.Zip(y, (a,b)=>a+";"+b);
 //
-//			//TODO : test higher dimensions & split variable
-////			var forestSettings = new RForestRegressionSettings(1, 1.0, 5, 10, 0);
-//			var forestSettings = new RForestRegressionSettings(20, 0.6, 5, 10, 0);
-//
-////			//************************************
-////			!!!!! TODO : il y a encore des choses bizarres :
-////			 - [Corrigé a priori,mais AV] avec les 4 niveaux, quand on rebranche le bootstrap @60%, 20 arbres : certaines moyennes sont fausses. 
-//			//			 - avec la gaussienne 2D, idem [SEMBLE REGLE SI ON RECALCULE LES AVG & MSE PARENT] : le pb n'affecte pas le cas 1D
-////			 - éclaircir les formules avg & mse post remove qui semblaient fausses
-//			// a priori : 
-//			//           **le rdatapointcomparer plus complexe ne sert à rien
-//			//           **on ne peut pas calculer l'avg/mse online à partir de celle du parent pour initialiser SplitBetween : l'ordre suite au re-tri n'est pas garanti
-//			//           **optimisable en changeant l'ordre dans lequel on construit les sous-arbres (ex breadth first au lieu de depth-first) : pas sur, on doit qd meme tester les splits sur d'autres variables
-//			//************************************
-//
+//			var forestSettings = new RForestRegressionSettings(100, 0.6, 100, 6, 0);
+////			var forestSettings = new RForestRegressionSettings(150, 0.6, 100, 0);
 //			var forestReg = new RForestRegressor(forestSettings);
 //			forestReg.Train(data.Item1, data.Item2);
+////			var forestReggedY = new List<double>();
+//////			for(int i = 0; i < Math.Min(x.Count(), 250); i++) 
+////			for(int i = 0; i < x.Count(); i++) 
+////			{
+////				forestReggedY.Add(forestReg.Evaluate(data.Item1[i]));
+////			}
+
+
+//			2D test
+			NumberFormatInfo nfi = new CultureInfo( "en-US", false ).NumberFormat;
+			var test = new RTreeTestData();
+//			var data = test.Build2DTestData(5);
+//			var data = test.Build2DTestData(20);
+			var data = test.Build2DTestData(50);
+			var x0 = data.Item1.Select(xx => xx[0]).ToArray();
+			var x1 = data.Item1.Select(xx => xx[1]).ToArray();
+			var y = data.Item2;
+			var xy = x0.Zip(x1, (a,b)=>a.ToString(nfi)+";"+b.ToString(nfi)).Zip(y, (a,b)=>a+";"+b.ToString(nfi));
+
+			//TODO : test higher dimensions & split variable
+//			var forestSettings = new RForestRegressionSettings(1, 1.0, 5, 10, 0);
+//			var forestSettings = new RForestRegressionSettings(20, 0.6, 5, 10, 0);
+			var forestSettings = new RForestRegressionSettings(100, 0.6, 5, 10, 0);
+
+//			//************************************
+//			!!!!! TODO : il y a encore des choses bizarres :
+//			 - [Corrigé a priori,mais AV] avec les 4 niveaux, quand on rebranche le bootstrap @60%, 20 arbres : certaines moyennes sont fausses. 
+			//			 - avec la gaussienne 2D, idem [SEMBLE REGLE SI ON RECALCULE LES AVG & MSE PARENT] : le pb n'affecte pas le cas 1D
+//			 - éclaircir les formules avg & mse post remove qui semblaient fausses
+			// a priori : 
+			//           **le rdatapointcomparer plus complexe ne sert à rien
+			//           **on ne peut pas calculer l'avg/mse online à partir de celle du parent pour initialiser SplitBetween : l'ordre suite au re-tri n'est pas garanti
+			//           **optimisable en changeant l'ordre dans lequel on construit les sous-arbres (ex breadth first au lieu de depth-first) : pas sur, on doit qd meme tester les splits sur d'autres variables
+			//************************************
+
+			var forestReg = new RForestRegressor(forestSettings);
+			forestReg.Train(data.Item1, data.Item2);
 //			var forestReggedY = new List<double>();
 //			for(int i = 0; i < x0.Count(); i++) 
 //			{
@@ -94,7 +99,7 @@ namespace RTree
 //			var zz = string.Join("\r\n", xyf);
 //			Console.WriteLine("x0;x1;y;yForest");
 //			Console.WriteLine(zz);
-//
+
 //			using(StreamWriter w = new StreamWriter("/home/lolo/data/Vivien/code/RTree/forest2D.csv"))
 //			{
 //				w.WriteLine("x0;x1;y;yForest");

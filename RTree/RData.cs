@@ -247,7 +247,7 @@ namespace RTree
 		}
 		#endregion
 
-		public static int Compare(RDataPoint dp1, RDataPoint dp2, int idx)
+		private static int Compare(RDataPoint dp1, RDataPoint dp2, int idx)
 		{
 			var x1 = dp1.Xs[idx];
 			var x2 = dp2.Xs[idx];
