@@ -197,12 +197,10 @@ namespace RTree
 				while(l == null)
 					l = GetParent(ii, out ii);
 
-				//TODO : find smthg faster
-				if(!lvs.Contains(l))
-					lvs.Add(l);
+				lvs.Add(l);
 			}
 
-			return lvs;
+			return lvs.Distinct().ToList();
 		}
 
 		public List<int> GetLeavesPos()
@@ -224,13 +222,36 @@ namespace RTree
 				while(l == null)
 					l = GetParent(ii, out ii);
 
-				//TODO : find smthg faster
-				if(!lvs.Contains(ii))
-					lvs.Add(ii);
+				lvs.Add(ii);
 			}
 
-			return lvs;
+			return lvs.Distinct().ToList();
 		}
+
+//		public HashSet<int> GetLeavesPos()
+//		{
+//			//single node : root = leaf
+//			if(treeDepth == 0)
+//				return new HashSet<int>(){ 0 };
+//
+//			var leavesRg = GetSliceRange(treeDepth);
+//
+//			var start = leavesRg.Item1;
+//			var len = leavesRg.Item2;
+//			var lvs = new HashSet<int>();
+//			for(int i = 0; i < len; i++) 
+//			{
+//				var idx = start + i;
+//				var l = nodes[idx];
+//				int ii = idx;
+//				while(l == null)
+//					l = GetParent(ii, out ii);
+//
+//				lvs.Add(ii);
+//			}
+//
+//			return lvs;
+//		}
 
 		//probably slow
 		public List<RNode> GetInternalNodes()
@@ -253,7 +274,7 @@ namespace RTree
 
 		public double Evaluate(double[] x)
 		{
-			leaves = leaves ?? GetLeavesPos();
+			leaves = leaves ?? GetLeavesPos().ToList();
 			for(int i = 0; i < leaves.Count; i++) 
 			{
 				int idx = leaves[i];
