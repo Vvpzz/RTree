@@ -66,6 +66,13 @@ namespace RTree
 				var bsData = data.BootStrap(bsIndices);
 				var t = GrowTree(bsData, treeSettings);
 				trees.Add(t);
+
+//				var ds = bsData.Points;
+//				foreach(var d in ds) 
+//				{
+//					Console.WriteLine(d.ToString());	
+//				}
+
 				sw.Stop();
 				Console.WriteLine (string.Format("Build tree {0}/{1} [n={3}][d={4}][{2}]", i+1, nTrees, sw.Elapsed, t.NbNodes, t.Depth));
 			}

@@ -66,7 +66,7 @@ namespace RTree
 		int nSplitVars;
 		int[] splitVars;
 
-		int lastSortedVar;
+		int lastSortedVar=-1;
 
 		public RTree Tree { get; private set; }
 		public RTreeRegressionReport Report { get; private set; }
@@ -103,38 +103,46 @@ namespace RTree
 
 		private RTree BuildFullTree(ref RData data, out double mse)
 		{
-//			Recursive version
-//			var rootNode = RNode.Root(data);
-//			var buildTree = new RTree(rootNode);
-//
-//			nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
-//			splitVars = GetSplitVars(data.NVars, nSplitVars);
-//
-//			//sort on first dimension
-//			data.SortBetween(0, 0, data.Points.Length);
-//			lastSortedVar = 0;
-//			RecursiveBuildFullTree(buildTree, data, 0, 0, data.Points.Length, data.Average(0, data.Points.Length), data.MSE(0, data.Points.Length));
-//
-//			mse = buildTree.MSE();
-//
-//			return buildTree;
+			bool recursive = true;
 
-			//Non recursive version
+			if(recursive) 
+			{
+				// Recursive version
+				var rootNode = RNode.Root(data);
+				var buildTree = new RTree(rootNode);
 
-			nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
-			splitVars = GetSplitVars(data.NVars, nSplitVars);
-			//sort on first dimension
-			data.SortBetween(0, 0, data.Points.Length);
-			lastSortedVar = 0;
-			var t = NonRecursiveBuildFullTree(data);
-			mse = t.MSE();
-			return t;
+				nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
+				splitVars = GetSplitVars(data.NVars, nSplitVars);
+
+				//sort on first dimension
+				data.SortBetween(0, 0, data.Points.Length);
+				lastSortedVar = 0;
+				RecursiveBuildFullTree(buildTree, data, 0, 0, data.Points.Length, data.Average(0, data.Points.Length), data.MSE(0, data.Points.Length));
+
+				mse = buildTree.MSE();
+
+				return buildTree;
+			}
+			else 
+			{
+				// Non recursive version
+
+				nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
+				splitVars = GetSplitVars(data.NVars, nSplitVars);
+
+				var t = NonRecursiveBuildFullTree(data);
+				mse = t.MSE();
+				return t;
+			}
 		}
 
 //		!!!!!TODO
 	    //in order to reduce the nb of calls to sort algo, build tree breadth first instead of depth first?
 		private RTree NonRecursiveBuildFullTree(RData data /*, int pos, int start, int length, double parentAvg, double parentMse*/)
 		{
+			//sort on first dimension
+			SortIfNeeded(data, 0, data.Points.Length, 0, -1);
+
 			var rootNode = RNode.Root(data);
 			RTree t =  new RTree(rootNode);
 			int pos = 0;
@@ -180,21 +188,26 @@ namespace RTree
 					var parentAvg = parentNode.Average;
 					var parentMse = parentNode.MSE;
 
-					SortIfNeeded(data, start, length, parentNode.NodeSplit.VarId);
-					OptimizeSplitVars();
+					//TODO : shouldn't need it : si! on en a besoin car on à depth+1, on passe après le n-eme parent de depth, et pas juste après celui qu'on split....
+//					!!!ici : commencer par les enfants du dernier parent!!!
+//					SortIfNeeded(data, start, length, parentNode.NodeSplit.VarId);
+
+					int parentSort = parentNode.NodeSplit.VarId;
+					OptimizeSplitVars(parentSort);
 
 					var minMse = double.PositiveInfinity;
 					double mse, avgL, avgR, mseL, mseR;
 					int bestSplit = -1, bestVarId = -1;
-					double bestAvgL = double.NaN, bestAvgR = double.NaN, bestMseL = double.NaN, bestMseR = double.NaN;
+					double bestAvgL = double.NaN, bestAvgR = double.NaN, bestMseL = double.NaN, bestMseR = double.NaN;//, bestMid = double.NaN;
 					for(int i = 0; i < nSplitVars; i++) 
 					{				
 						int varId = splitVars[i];
 
-						SortIfNeeded(data, start, length, varId);
+						SortIfNeeded(data, start, length, varId, parentSort);
 
 						int split = data.BestSplitBetween(varId, start, length, out mse, out avgL, out avgR, out mseL, out mseR, parentAvg, parentMse);
-						if(mse<minMse)
+						//The second (arbitrary) condition is added so as not to depend on the order of the tested split variables
+						if(mse<minMse || (mse==minMse && varId<bestVarId))
 						{
 							minMse = mse;
 							bestSplit = split;
@@ -203,11 +216,12 @@ namespace RTree
 							bestMseL = mseL;
 							bestMseR = mseR;
 							bestVarId = varId;
+//							bestMid = 0.5 * (data.Points[bestSplit].Xs[bestVarId] + data.Points[bestSplit + 1].Xs[bestVarId]);
 						}						
 					}
 
-					//Sort according to the best split
-					SortIfNeeded(data, start, length, bestVarId);
+					//Sort according to the best split (needed for evaluation)
+					SortIfNeeded(data, start, length, bestVarId, splitVars[nSplitVars-1]);
 
 					var lengthL = bestSplit - start + 1;
 					var lengthR = length - lengthL;
@@ -239,7 +253,6 @@ namespace RTree
 			
 			var minMse = double.PositiveInfinity;
 
-			//TODO : debug in n-dimension
 			OptimizeSplitVars();
 
 			double mse, avgL, avgR, mseL, mseR;
@@ -252,7 +265,7 @@ namespace RTree
 				SortIfNeeded(data, start, length, varId);
 
 				int split = data.BestSplitBetween(varId, start, length, out mse, out avgL, out avgR, out mseL, out mseR, parentAvg, parentMse);
-				if(mse<minMse)
+				if(mse<minMse || (mse==minMse && varId<bestVarId))
 				{
 					minMse = mse;
 					bestSplit = split;
@@ -296,6 +309,15 @@ namespace RTree
 			}
 		}
 
+		private void SortIfNeeded(RData data, int start, int length, int varId, int alreadySorted)
+		{
+			if(varId != alreadySorted) 
+			{
+				data.SortBetween(varId, start, length);
+				lastSortedVar = varId;
+			}
+		}
+
 		private static int[] GetSplitVars(int nVars, int nSplitVars)
 		{
 			int[] splitVars;
@@ -320,6 +342,17 @@ namespace RTree
 			int i = Array.IndexOf(splitVars, lastSortedVar);
 			var temp = splitVars[0];
 			splitVars[0] = lastSortedVar;
+			splitVars[i] = temp;
+		}
+
+		void OptimizeSplitVars(int alreadySorted)
+		{
+			if(splitVars[0] == alreadySorted)
+				return;
+
+			int i = Array.IndexOf(splitVars, alreadySorted);
+			var temp = splitVars[0];
+			splitVars[0] = alreadySorted;
 			splitVars[i] = temp;
 		}
 			

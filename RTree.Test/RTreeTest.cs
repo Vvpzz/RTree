@@ -331,21 +331,25 @@ namespace RTree.Test
 
 		}
 
-		[TestCase(true, 2.6396765002892344E-27d)]
-		[TestCase(false, 1.7981593095030839d)]
-		public void TestForestPerformance2D(bool simple, double refMse)
+		[TestCase(5, true, 1, 3.1554436208840472E-30d)]
+		[TestCase(5, false, 1, 3.4813736473461994d)]
+		[TestCase(20, true, 20, 2.6396765002892344E-27d)]
+		[TestCase(20, false, 20,  1.7741899354939448d/*1.7981593095030839d*/)]
+		public void TestForestPerformance2D(int sqrtNbPoints, bool simple, int nbTrees, double refMse)
 		{
 			var test = new RTreeTestData();
-			var data = test.Build2DTestData(20, simple);
+			var data = test.Build2DTestData(sqrtNbPoints, simple);
 			var x0 = data.Item1.Select(xx => xx[0]).ToArray();
 //			var x1 = data.Item1.Select(xx => xx[1]).ToArray();
 			var y = data.Item2;
 			//			var xy = x.Zip(y, (a,b)=>a+";"+b);
 
 			//TODO : test higher dimensions & split variable
-			var forestSettings = new RForestRegressionSettings(20, 0.6, 5, 10, 0);
+			var forestSettings = new RForestRegressionSettings(nbTrees, 0.6, 5, 10, 0);
 			var forestReg = new RForestRegressor(forestSettings);
-			forestReg.Train(data.Item1, data.Item2);
+			var dd = RData.FromRawData(data.Item1, data.Item2);
+			forestReg.Train(dd);
+//			forestReg.Train(data.Item1, data.Item2);
 			//var forestReggedY = new List<double>();
 			var mse = 0.0;
 			for(int i = 0; i < x0.Count(); i++) 
@@ -355,9 +359,20 @@ namespace RTree.Test
 				mse += tmp * tmp;
 			}
 
+			Console.WriteLine(forestReg.Trees[0].Print());
+
+//			var ds = dd.Points;
+//			foreach(var d in ds) 
+//			{
+//				Console.WriteLine(d.ToString());	
+//			}
+
+
 			Console.WriteLine("MSE: " + mse);
 			Assert.AreEqual(refMse, mse, 1e-15);
 			//			var xyf = xy.Zip(forestReggedY, (a, b) => a + ";" + b);
+
+
 		}
 
 
