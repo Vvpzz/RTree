@@ -101,44 +101,34 @@ namespace RTree
 			return Tree.Evaluate(x);
 		}
 
-		private RTree BuildFullTree(ref RData data, out double mse)
+		private RTree BuildFullTree(ref RData data, out double mse, bool breadthFirst = true)
 		{
-			bool recursive = true;
-
-			if(recursive) 
+			if(breadthFirst) 
 			{
-				// Recursive version
-				var rootNode = RNode.Root(data);
-				var buildTree = new RTree(rootNode);
-
+				// Breadth first (non recursive) tree building. Faster than depth first.
 				nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
 				splitVars = GetSplitVars(data.NVars, nSplitVars);
-
+				var t = BuildFullTreeBreadthFirst(data);
+				mse = t.MSE();
+				return t;
+			} 
+			else 
+			{
+				// Depth first (recursive) tree building
+				var rootNode = RNode.Root(data);
+				var buildTree = new RTree(rootNode);
+				nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
+				splitVars = GetSplitVars(data.NVars, nSplitVars);
 				//sort on first dimension
 				data.SortBetween(0, 0, data.Points.Length);
 				lastSortedVar = 0;
-				RecursiveBuildFullTree(buildTree, data, 0, 0, data.Points.Length, data.Average(0, data.Points.Length), data.MSE(0, data.Points.Length));
-
+				BuildFullTreeDepthFirst(buildTree, data, 0, 0, data.Points.Length, data.Average(0, data.Points.Length), data.MSE(0, data.Points.Length));
 				mse = buildTree.MSE();
-
 				return buildTree;
 			}
-			else 
-			{
-				// Non recursive version
-
-				nSplitVars = settings.NbSplitVariables == 0 ? data.NVars : settings.NbSplitVariables;
-				splitVars = GetSplitVars(data.NVars, nSplitVars);
-
-				var t = NonRecursiveBuildFullTree(data);
-				mse = t.MSE();
-				return t;
-			}
 		}
-
-//		!!!!!TODO
-	    //in order to reduce the nb of calls to sort algo, build tree breadth first instead of depth first?
-		private RTree NonRecursiveBuildFullTree(RData data /*, int pos, int start, int length, double parentAvg, double parentMse*/)
+			
+		private RTree BuildFullTreeBreadthFirst(RData data)
 		{
 			//sort on first dimension
 			SortIfNeeded(data, 0, data.Points.Length, 0, -1);
@@ -146,14 +136,8 @@ namespace RTree
 			var rootNode = RNode.Root(data);
 			RTree t =  new RTree(rootNode);
 			int pos = 0;
-//			var nodePos = 0;
 			var nodeDepth = RTree.DepthAtPos(0);
-//			var start = 0;
-//			var length = data.Points.Length;
-//			var parentAvg = data.Average(0, length);
-//			var parentMse = data.MSE(0, length);
 
-			var parentNodes = new[]{RNode.Root(data)};
 
 			bool exit = false;
 			while(!exit)
@@ -175,7 +159,7 @@ namespace RTree
 					}
 					
 					var length = parentNode.Length;
-					if(length <= settings.MinNodeSize /*|| nodeDepth >= settings.MaxTreeDepth*/)
+					if(length <= settings.MinNodeSize)
 					{
 						pos += 1;
 						continue;
@@ -188,17 +172,13 @@ namespace RTree
 					var parentAvg = parentNode.Average;
 					var parentMse = parentNode.MSE;
 
-					//TODO : shouldn't need it : si! on en a besoin car on à depth+1, on passe après le n-eme parent de depth, et pas juste après celui qu'on split....
-//					!!!ici : commencer par les enfants du dernier parent!!!
-//					SortIfNeeded(data, start, length, parentNode.NodeSplit.VarId);
-
 					int parentSort = parentNode.NodeSplit.VarId;
 					OptimizeSplitVars(parentSort);
 
 					var minMse = double.PositiveInfinity;
 					double mse, avgL, avgR, mseL, mseR;
 					int bestSplit = -1, bestVarId = -1;
-					double bestAvgL = double.NaN, bestAvgR = double.NaN, bestMseL = double.NaN, bestMseR = double.NaN;//, bestMid = double.NaN;
+					double bestAvgL = double.NaN, bestAvgR = double.NaN, bestMseL = double.NaN, bestMseR = double.NaN;
 					for(int i = 0; i < nSplitVars; i++) 
 					{				
 						int varId = splitVars[i];
@@ -216,7 +196,6 @@ namespace RTree
 							bestMseL = mseL;
 							bestMseR = mseR;
 							bestVarId = varId;
-//							bestMid = 0.5 * (data.Points[bestSplit].Xs[bestVarId] + data.Points[bestSplit + 1].Xs[bestVarId]);
 						}						
 					}
 
@@ -245,7 +224,7 @@ namespace RTree
 		}
 
 
-		private void RecursiveBuildFullTree(RTree t, RData data, int pos, int start, int length, double parentAvg, double parentMse)
+		private void BuildFullTreeDepthFirst(RTree t, RData data, int pos, int start, int length, double parentAvg, double parentMse)
 		{
 			var nodeDepth = RTree.DepthAtPos(pos);
 			if(length <= settings.MinNodeSize || nodeDepth >= settings.MaxTreeDepth)
@@ -292,12 +271,12 @@ namespace RTree
 
 			int leftChildPos;
 			t.AddChildNodes(pos, nodeL, nodeR, out leftChildPos);
-			RecursiveBuildFullTree(t, data, leftChildPos, start, lengthL, bestAvgL, bestMseL);
+			BuildFullTreeDepthFirst(t, data, leftChildPos, start, lengthL, bestAvgL, bestMseL);
 
 			//Sort according to the best split
 			SortIfNeeded(data, start, length, bestVarId);
 
-			RecursiveBuildFullTree(t, data, leftChildPos + 1, bestSplit + 1, lengthR, bestAvgR, bestMseR);
+			BuildFullTreeDepthFirst(t, data, leftChildPos + 1, bestSplit + 1, lengthR, bestAvgR, bestMseR);
 		}
 
 		private void SortIfNeeded(RData data, int start, int length, int varId)

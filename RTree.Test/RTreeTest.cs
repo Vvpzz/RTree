@@ -334,7 +334,7 @@ namespace RTree.Test
 		[TestCase(5, true, 1, 3.1554436208840472E-30d)]
 		[TestCase(5, false, 1, 3.4813736473461994d)]
 		[TestCase(20, true, 20, 2.6396765002892344E-27d)]
-		[TestCase(20, false, 20,  1.7741899354939448d/*1.7981593095030839d*/)]
+		[TestCase(20, false, 20,  1.7741899354939448d)]
 		public void TestForestPerformance2D(int sqrtNbPoints, bool simple, int nbTrees, double refMse)
 		{
 			var test = new RTreeTestData();
